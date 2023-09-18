@@ -1,5 +1,6 @@
 {
 	"name": "ls_SQLPool",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
 	"properties": {
 		"annotations": [],
 		"type": "AzureSqlDW",
