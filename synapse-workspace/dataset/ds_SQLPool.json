@@ -1,0 +1,30 @@
+{
+	"name": "ds_SQLPool",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_SQLPool",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SAPTable": {
+				"type": "string"
+			},
+			"schemaName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schemaName",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().SAPTable",
+				"type": "Expression"
+			}
+		}
+	}
+}

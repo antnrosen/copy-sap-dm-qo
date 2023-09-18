@@ -1,0 +1,20 @@
+{
+	"name": "GLACCOUNTHIERARCHYNODEFINAL",
+	"properties": {
+		"folder": {
+			"name": "Hierarchy_View_Scripts"
+		},
+		"content": {
+			"query": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n\nCREATE VIEW [dmgold].[GLACCOUNTHIERARCHYNODEFINAL]\nAS SELECT h.*, ht.LANGUAGE, ht.[_ISOLanguage], ht.hierarchynodetext as HIERARCHYNODETEXT \n FROM [dmgold].[I_GLACCOUNTHIERARCHYNODE] h left outer JOIN\n [dmgold].[I_GLACCOUNTHIERARCHYNODET] ht ON\nh.[key] = ht.[key]\nand h.validityenddate = ht.validityenddate\nand h.[_SystemName] = ht.[_SystemName]\n where h.nodetype in ('R','N')\n\n UNION\n\n SELECT h.*, ht.LANGUAGE, ht.[_ISOLanguage],ht.[GLACCOUNTNAME] as HIERARCHYNODETEXT \n FROM [dmgold].[I_GLACCOUNTHIERARCHYNODE] h left outer JOIN\n [dmgold].[I_GLACCOUNTTEXT] ht ON\n h.[chartofaccounts] = ht.[chartofaccounts]\n and h.[glaccount] = ht.[glaccount]\n and h.[_SystemName] = ht.[_SystemName]\n and h.validityenddate = '99991231'\n where h.nodetype ='L'\n and language is not NULL;\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

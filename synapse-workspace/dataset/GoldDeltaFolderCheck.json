@@ -1,0 +1,40 @@
+{
+	"name": "GoldDeltaFolderCheck",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_dataLake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"p_name": {
+				"type": "string"
+			},
+			"p_systemName": {
+				"type": "string"
+			},
+			"p_container": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().p_name",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat('data/',dataset().p_systemName, '/gold/')",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().p_container",
+					"type": "Expression"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

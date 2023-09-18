@@ -1,0 +1,345 @@
+{
+	"name": "Get field metadata",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup SAP system",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "SAPSystem"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For each system",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup SAP system",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup SAP System').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Read object list",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": "SELECT STRING_AGG(QUOTENAME(CDSViewName, ''''), ',') AS CDSViews\nFROM (\n    SELECT DISTINCT CDSViewName\n    FROM extractionMetadata\n) AS DistinctCDSViews;",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "ds_metadata",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_Table": "extractionMetadata"
+									}
+								}
+							}
+						},
+						{
+							"name": "Extract metadata",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Read object list",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SapTableSource",
+									"rfcTableOptions": {
+										"value": "@{concat('STRUCOBJN IN ( ', activity('Read object list').output.firstRow.CDSViews, ' )')}",
+										"type": "Expression"
+									},
+									"customRfcReadTableFunctionModule": "",
+									"rfcTableFields": "STRUCOBJN, FIELDNAME, DATATYPE, LENG, DECIMALS",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_SAPTable",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_Table": "DD03ND",
+										"p_serverName": {
+											"value": "@item().serverName",
+											"type": "Expression"
+										},
+										"p_systemNumber": {
+											"value": "@item().systemNumber",
+											"type": "Expression"
+										},
+										"p_clientID": {
+											"value": "@item().clientId",
+											"type": "Expression"
+										},
+										"p_username": {
+											"value": "@item().username",
+											"type": "Expression"
+										},
+										"p_secretName": {
+											"value": "@item().secretName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_dataLake",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_container": {
+											"value": "@pipeline().parameters.p_container",
+											"type": "Expression"
+										},
+										"p_path": {
+											"value": "@pipeline().parameters.p_metadataDirectory",
+											"type": "Expression"
+										},
+										"p_name": {
+											"value": "@concat(item().systemName, '_metadata')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Extract metadata_copy1",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Read object list",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SapTableSource",
+									"additionalColumns": [
+										{
+											"name": "systemName",
+											"value": {
+												"value": "@item().systemName",
+												"type": "Expression"
+											}
+										}
+									],
+									"rfcTableOptions": {
+										"value": "@{concat('STRUCOBJN IN ( ', activity('Read object list').output.firstRow.CDSViews, ' )')}",
+										"type": "Expression"
+									},
+									"customRfcReadTableFunctionModule": "",
+									"rfcTableFields": "STRUCOBJN, FIELDNAME, DATATYPE, LENG, DECIMALS",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"preCopyScript": {
+										"value": "@{concat('DELETE FROM fieldMetadata WHERE systemName = ''', item().systemName, '''')}",
+										"type": "Expression"
+									},
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "STRUCOBJN"
+											},
+											"sink": {
+												"name": "CDSViewName",
+												"physicalType": "nvarchar"
+											}
+										},
+										{
+											"source": {
+												"name": "FIELDNAME"
+											},
+											"sink": {
+												"name": "fieldName"
+											}
+										},
+										{
+											"source": {
+												"name": "DATATYPE"
+											},
+											"sink": {
+												"name": "dataType"
+											}
+										},
+										{
+											"source": {
+												"name": "LENG"
+											},
+											"sink": {
+												"name": "length"
+											}
+										},
+										{
+											"source": {
+												"name": "DECIMALS"
+											},
+											"sink": {
+												"name": "decimals"
+											}
+										},
+										{
+											"source": {
+												"name": "systemName"
+											},
+											"sink": {
+												"name": "systemName"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_SAPTable",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_Table": "DD03ND",
+										"p_serverName": {
+											"value": "@item().serverName",
+											"type": "Expression"
+										},
+										"p_systemNumber": {
+											"value": "@item().systemNumber",
+											"type": "Expression"
+										},
+										"p_clientID": {
+											"value": "@item().clientId",
+											"type": "Expression"
+										},
+										"p_username": {
+											"value": "@item().username",
+											"type": "Expression"
+										},
+										"p_secretName": {
+											"value": "@item().secretName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_metadata",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_Table": "fieldMetadata"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"p_container": {
+				"type": "string",
+				"defaultValue": "sap"
+			},
+			"p_metadataDirectory": {
+				"type": "string",
+				"defaultValue": "resources"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-14T16:18:54Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

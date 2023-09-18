@@ -1,0 +1,219 @@
+{
+	"name": "df_s2g_text_nodelta",
+	"properties": {
+		"folder": {
+			"name": "SIlver_To_Gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SilverSource"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldRelatedView"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldInsertDelta"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_SQLPool",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldSqlInsertTarget"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference"
+					},
+					"name": "updateLastProcessedTimestamp"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoinToGetKeys"
+				},
+				{
+					"name": "selectSourceColumns"
+				},
+				{
+					"name": "allowUpsert"
+				},
+				{
+					"name": "getNewMaxTimestamp"
+				},
+				{
+					"name": "setRowToUpdateTimestamp"
+				},
+				{
+					"name": "allowUpdateLastProcessedTimestamp"
+				},
+				{
+					"name": "AddLanguageISOCode"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     p_name as string,",
+				"     p_directory as string,",
+				"     p_container as string (\"sap\"),",
+				"     p_systemName as string (\"PM4CLNT400\"),",
+				"     p_keyFields as string[] (['BILLINGDOCUMENTTYPE','LANGUAGE']),",
+				"     p_sqlschema as string (\"dmgold\"),",
+				"     p_relatedView as string",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/silver/', $p_name))) ~> SilverSource",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/gold/', $p_relatedView))) ~> GoldRelatedView",
+				"SilverSource, GoldRelatedView join(toString(reduce(array(toString(byNames(except($p_keyFields, ['LANGUAGE']),'SilverSource'))), '', concat(#acc,coalesce(toString(#item),'')), #result)) == toString(reduce(array(toString(byNames(except($p_keyFields, ['LANGUAGE']),'GoldRelatedView'))), '', concat(#acc,coalesce(toString(#item),'')), #result))",
+				"     && toString(byName('_SystemName')) == toString(byName('_SystemName')),",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'right')~> JoinToGetKeys",
+				"JoinToGetKeys select(mapColumn(",
+				"          each(match(stream=='SilverSource')),",
+				"          each(match(name=='Key'),",
+				"               'Key' = $$),",
+				"          each(match(name=='_ISOLanguage'),",
+				"               '_ISOLanguage' = $$)",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectSourceColumns",
+				"selectSourceColumns alterRow(insertIf(true())) ~> allowUpsert",
+				"JoinToGetKeys aggregate(newMaxTimestamp = max(toTimestamp(byName('_UpdateTimeStamp')))) ~> getNewMaxTimestamp",
+				"getNewMaxTimestamp derive(CDSViewName = $p_name,",
+				"          systemName = $p_systemName,",
+				"          lastProcessedTimestamp = toTimestamp(byName('lastProcessedTimestamp'))) ~> setRowToUpdateTimestamp",
+				"setRowToUpdateTimestamp alterRow(updateIf(true())) ~> allowUpdateLastProcessedTimestamp",
+				"allowUpsert derive(each(match(name=='LANGUAGE'), '_ISOLanguage' = case(\r",
+				"     toString(byName('LANGUAGE'))=='a', 'AF',\r",
+				"     toString(byName('LANGUAGE'))=='L', 'PL',\r",
+				"     toString(byName('LANGUAGE'))=='0', 'SR',\r",
+				"     toString(byName('LANGUAGE'))=='1', 'ZH',\r",
+				"     toString(byName('LANGUAGE'))=='2', 'TH',\r",
+				"     toString(byName('LANGUAGE'))=='3', 'KO',\r",
+				"     toString(byName('LANGUAGE'))=='4', 'RO',\r",
+				"     toString(byName('LANGUAGE'))=='5', 'SL',\r",
+				"     toString(byName('LANGUAGE'))=='6', 'HR',\r",
+				"     toString(byName('LANGUAGE'))=='7', 'MS',\r",
+				"     toString(byName('LANGUAGE'))=='8', 'UK',\r",
+				"     toString(byName('LANGUAGE'))=='9', 'ET',\r",
+				"     toString(byName('LANGUAGE'))=='A', 'AR',\r",
+				"     toString(byName('LANGUAGE'))=='B', 'HE',\r",
+				"     toString(byName('LANGUAGE'))=='C', 'CS',\r",
+				"     toString(byName('LANGUAGE'))=='D', 'DE',\r",
+				"     toString(byName('LANGUAGE'))=='E', 'EN',\r",
+				"     toString(byName('LANGUAGE'))=='F', 'FR',\r",
+				"     toString(byName('LANGUAGE'))=='G', 'EL',\r",
+				"     toString(byName('LANGUAGE'))=='H', 'HU',\r",
+				"     toString(byName('LANGUAGE'))=='I', 'IT',\r",
+				"     toString(byName('LANGUAGE'))=='J', 'JA',\r",
+				"     toString(byName('LANGUAGE'))=='K', 'DA',\r",
+				"     toString(byName('LANGUAGE'))=='L', 'PL',\r",
+				"     toString(byName('LANGUAGE'))=='M', 'ZF',\r",
+				"     toString(byName('LANGUAGE'))=='N', 'NL',\r",
+				"     toString(byName('LANGUAGE'))=='O', 'NO',\r",
+				"     toString(byName('LANGUAGE'))=='P', 'PT',\r",
+				"     toString(byName('LANGUAGE'))=='Q', 'SK',\r",
+				"     toString(byName('LANGUAGE'))=='R', 'RU',\r",
+				"     toString(byName('LANGUAGE'))=='S', 'ES',\r",
+				"     toString(byName('LANGUAGE'))=='T', 'TR',\r",
+				"     toString(byName('LANGUAGE'))=='U', 'FI',\r",
+				"     toString(byName('LANGUAGE'))=='V', 'SV',\r",
+				"     toString(byName('LANGUAGE'))=='W', 'BG',\r",
+				"     toString(byName('LANGUAGE'))=='X', 'LT',\r",
+				"     toString(byName('LANGUAGE'))=='Y', 'LV',\r",
+				"     toString(byName('LANGUAGE'))=='Z', 'Z1',\r",
+				"     toString(byName('LANGUAGE'))=='a', 'AF',\r",
+				"     toString(byName('LANGUAGE'))=='b', 'IS',\r",
+				"     toString(byName('LANGUAGE'))=='c', 'CA',\r",
+				"     toString(byName('LANGUAGE'))=='d', 'SH',\r",
+				"     toString(byName('LANGUAGE'))=='i', 'ID',\r",
+				"     toString(byName('LANGUAGE'))=='묩', 'HI',\r",
+				"     toString(byName('LANGUAGE'))=='뱋', 'KK',\r",
+				"     toString(byName('LANGUAGE'))=='쁩', 'VI'\r",
+				"))) ~> AddLanguageISOCode",
+				"AddLanguageISOCode sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/',$p_systemName,'/gold/',$p_name)),",
+				"     truncate: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     keys:($p_keyFields),",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1) ~> GoldInsertDelta",
+				"AddLanguageISOCode sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'synapseanalytics',",
+				"     schemaName: ($p_sqlschema),",
+				"     tableName: ($p_name),",
+				"     preSQLs:[(\"DELETE FROM \" + $p_sqlschema + \".\" + $p_name + \" WHERE _SystemName = \\'\" + $p_systemName + \"\\'\")],",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     allowCopyCommand: true,",
+				"     staged: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> GoldSqlInsertTarget",
+				"allowUpdateLastProcessedTimestamp sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CDSViewName as string,",
+				"          inScope as boolean",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:false,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['CDSViewName','systemName'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 2,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> updateLastProcessedTimestamp"
+			]
+		}
+	}
+}

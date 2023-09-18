@@ -1,0 +1,20 @@
+{
+	"name": "vtGLACCOUNTTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "\nDECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtGLACCOUNTTEXT]\nAS \nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,GLAccountKeys AS (\nSELECT DISTINCT \n    _SystemName, \n    [Key], \n    CHARTOFACCOUNTS, \n    GLACCOUNT, \n    GLACCOUNT AS GLACCOUNTLONGNAME,\n    GLACCOUNT AS GLACCOUNTNAME\nFROM [dmgold].[I_GLACCOUNTINCHARTOFACCOUNTS]\n\n) \n,GLAccountKeysLanguages AS (\nSELECT * FROM GLAccountKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,GLAccountTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_GLACCOUNTTEXT]\nWHERE [Key] IS NOT NULL\n)\n,GLAccountTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.CHARTOFACCOUNTS, kl.CHARTOFACCOUNTS) AS CHARTOFACCOUNTS,\n    COALESCE(txt.GLACCOUNT, kl.GLACCOUNT) AS GLACCOUNT,\n    COALESCE(txt.GLACCOUNTNAME, kl.GLACCOUNTNAME) AS GLACCOUNTNAME\nFROM GLAccountKeysLanguages kl\nFULL OUTER JOIN GLAccountTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM GLAccountTextprefill   \n AS SourceTable PIVOT(max([GLACCOUNTNAME]) FOR [_ISOLanguage] IN ('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

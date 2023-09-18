@@ -1,0 +1,20 @@
+{
+	"name": "COSTCENTERHIERARCHYNODEFINAL",
+	"properties": {
+		"folder": {
+			"name": "Hierarchy_View_Scripts"
+		},
+		"content": {
+			"query": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n\nCREATE VIEW [dmgold].[COSTCENTERHIERARCHYNODEFINAL]\nAS SELECT h.*, ht.LANGUAGE, ht.[_ISOLanguage], ht.hierarchynodetext as HIERARCHYNODETEXT \n FROM [dmgold].[I_COSTCENTERHIERARCHYNODE] h left outer JOIN\n [dmgold].[I_COSTCENTERHIERARCHYNODET] ht ON\n h.[key] = ht.[key]\nand h.[_SystemName] = ht.[_SystemName]\nand h.validityenddate = ht.validityenddate\n where h.nodetype in ('R','N')\n \n UNION\n\n SELECT h.*, ht.LANGUAGE,  ht.[_ISOLanguage], ht.[COSTCENTERNAME] as HIERARCHYNODETEXT \n FROM [dmgold].[I_COSTCENTERHIERARCHYNODE] h left outer JOIN\n [dmgold].[I_COSTCENTERTEXT] ht ON\n h.[costcenter] = ht.[costcenter]\n and h.[controllingarea] = ht.[controllingarea]\n and h.[validityenddate] = ht.[validityenddate]\n  and h.[_SystemName] = ht.[_SystemName]\n where h.nodetype ='L';\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,133 @@
+{
+	"name": "Orchestration Master",
+	"properties": {
+		"activities": [
+			{
+				"name": "Extract to Silver",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "p_s2s_system_lookup",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Silver to Gold",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Extract to Silver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "p_s2g_system_lookup",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Fact - Sales",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Silver to Gold",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "p_s2g_fact_sales",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"p_container": "sap",
+						"p_directory": "data"
+					}
+				}
+			},
+			{
+				"name": "Fact - Finance",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Fact - Sales",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "p_s2g_fact_gl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"p_container": "sap",
+						"p_directory": "data"
+					}
+				}
+			},
+			{
+				"name": "Fact - Billing",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Fact - Finance",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "p_s2g_fact_billing",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Fact - Deliveries",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Fact - Billing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "p_s2g_fact_delivery",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"p_container": "sap",
+						"p_directory": "data"
+					}
+				}
+			}
+		],
+		"annotations": []
+	}
+}

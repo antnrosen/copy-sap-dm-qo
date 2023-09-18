@@ -1,0 +1,147 @@
+{
+	"name": "df_s2s_cdc_delta",
+	"properties": {
+		"folder": {
+			"name": "SAP_to_Silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_SAPCDC",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SAPSource"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ImportDataTypes"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ADLSTarget"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ADLSTargetDelete"
+				},
+				{
+					"name": "ColumnMappingSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AddTrackingColumns"
+				},
+				{
+					"name": "OnlyDeletedRecords"
+				},
+				{
+					"name": "ApplyCorrectDataTypes"
+				},
+				{
+					"name": "AlterUpsert"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     p_context as string,",
+				"     p_ODPName as string,",
+				"     p_name as string,",
+				"     p_directory as string,",
+				"     p_container as string,",
+				"     p_systemName as string,",
+				"     p_keyFields as string[]",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     store: 'SapOdp',",
+				"     format: 'sapObject',",
+				"     staged: true,",
+				"     context: ($p_context),",
+				"     objectName: ($p_ODPName),",
+				"     readMode: 'fullAndIncrementalLoad',",
+				"     keys: ($p_keyFields),",
+				"     enableMultiLineRow: true) ~> SAPSource",
+				"source(output(",
+				"          STRUCOBJN as string,",
+				"          FIELDNAME as string,",
+				"          DATATYPE as string,",
+				"          LENG as string,",
+				"          DECIMALS as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: 'resources',",
+				"     fileName: (concat($p_systemName, '_metadata.parquet'))) ~> ImportDataTypes",
+				"ApplyCorrectDataTypes derive({_UpdateTimeStamp} = currentTimestamp(),",
+				"          {_SystemName} = $p_systemName) ~> AddTrackingColumns",
+				"AddTrackingColumns filter(isDelete(1)) ~> OnlyDeletedRecords",
+				"SAPSource derive(each(match(!isNull(ColumnMappingSink#lookup($p_name,name).FIELDNAME)&&in([\"NUMC\"],ColumnMappingSink#lookup($p_name,name).DATATYPE)), $$ = toInteger($$)),",
+				"          each(match(!isNull(ColumnMappingSink#lookup($p_name,name).FIELDNAME)&&in([\"DATS\"],ColumnMappingSink#lookup($p_name,name).DATATYPE)), $$ = toDate(substring(toString($$), 1, 8), \"yyyyMMdd\"))) ~> ApplyCorrectDataTypes",
+				"OnlyDeletedRecords alterRow(upsertIf(true())) ~> AlterUpsert",
+				"AddTrackingColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/silver/', $p_name)),",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: true,",
+				"     insertable: true,",
+				"     updateable: true,",
+				"     upsertable: true,",
+				"     keys:($p_keyFields),",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> ADLSTarget",
+				"AlterUpsert sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/silver/delete/', $p_name)),",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: true,",
+				"     keys:($p_keyFields),",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> ADLSTargetDelete",
+				"ImportDataTypes sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     keys:[(\"STRUCOBJN\"),(\"FIELDNAME\")],",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: false,",
+				"     saveOrder: 1) ~> ColumnMappingSink"
+			]
+		}
+	}
+}

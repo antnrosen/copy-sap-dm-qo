@@ -1,0 +1,61 @@
+{
+	"name": "ds_SAPTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_SAPTable",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"p_serverName": {
+					"value": "@dataset().p_serverName",
+					"type": "Expression"
+				},
+				"p_systemNumber": {
+					"value": "@dataset().p_systemNumber",
+					"type": "Expression"
+				},
+				"p_clientID": {
+					"value": "@dataset().p_clientID",
+					"type": "Expression"
+				},
+				"p_username": {
+					"value": "@dataset().p_username",
+					"type": "Expression"
+				},
+				"p_secretName": {
+					"value": "@dataset().p_secretName",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"p_Table": {
+				"type": "string"
+			},
+			"p_serverName": {
+				"type": "string"
+			},
+			"p_systemNumber": {
+				"type": "string"
+			},
+			"p_clientID": {
+				"type": "string"
+			},
+			"p_username": {
+				"type": "string"
+			},
+			"p_secretName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SapTableResource",
+		"schema": [],
+		"typeProperties": {
+			"tableName": {
+				"value": "@dataset().p_Table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

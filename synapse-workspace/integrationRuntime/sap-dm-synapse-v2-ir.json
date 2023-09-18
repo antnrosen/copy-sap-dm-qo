@@ -1,0 +1,6 @@
+{
+	"name": "sap-dm-synapse-v2-ir",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

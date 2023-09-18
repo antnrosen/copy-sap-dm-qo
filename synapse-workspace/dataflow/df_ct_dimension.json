@@ -1,0 +1,93 @@
+{
+	"name": "df_ct_dimension",
+	"properties": {
+		"folder": {
+			"name": "SIlver_To_Gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SilverSource"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_metadata",
+						"type": "LinkedServiceReference"
+					},
+					"name": "AddDefaultValue"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldTarget"
+				}
+			],
+			"transformations": [
+				{
+					"name": "ExcludeAllRecords"
+				},
+				{
+					"name": "UnionWithDefaultValue"
+				},
+				{
+					"name": "AddKeyColumn"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     p_name as string,",
+				"     p_directory as string,",
+				"     p_container as string,",
+				"     p_systemName as string",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat($p_directory, '/' , $p_systemName, '/silver/', $p_name))) ~> SilverSource",
+				"source(output(",
+				"          Key as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'query',",
+				"     store: 'sqlserver',",
+				"     query: ('SELECT -1 AS [Key]'),",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> AddDefaultValue",
+				"SilverSource filter(false()) ~> ExcludeAllRecords",
+				"ExcludeAllRecords, ExcludeAllRecords, AddDefaultValue union(byName: true)~> UnionWithDefaultValue",
+				"UnionWithDefaultValue derive(each(match(true()), $$ = $$),",
+				"          each(match(name=='LANGUAGE'), '_ISOLanguage' = toString(''))) ~> AddKeyColumn",
+				"AddKeyColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat($p_directory, '/', $p_systemName, '/gold/', $p_name)),",
+				"     truncate: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> GoldTarget"
+			]
+		}
+	}
+}

@@ -1,0 +1,131 @@
+{
+	"name": "p_s2g_fact_gl",
+	"properties": {
+		"activities": [
+			{
+				"name": "For each system",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup finance metadata",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup finance metadata').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "FinanceFactToGold",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "df_s2g_fact_gl",
+									"type": "DataFlowReference",
+									"parameters": {
+										"p_name": {
+											"value": "'@{item().CDSViewName}'",
+											"type": "Expression"
+										},
+										"p_directory": {
+											"value": "'@{pipeline().parameters.p_directory}'",
+											"type": "Expression"
+										},
+										"p_container": {
+											"value": "'@{pipeline().parameters.p_container}'",
+											"type": "Expression"
+										},
+										"p_systemName": {
+											"value": "'@{item().systemName}'",
+											"type": "Expression"
+										}
+									},
+									"datasetParameters": {
+										"getTimestamp": {
+											"p_Table": "extractionScope"
+										},
+										"updateLastProcessedTimestamp": {
+											"p_Table": "extractionScope"
+										}
+									}
+								},
+								"staging": {
+									"linkedService": {
+										"referenceName": "ls_dataLake",
+										"type": "LinkedServiceReference"
+									},
+									"folderPath": "sap/staging"
+								},
+								"integrationRuntime": {
+									"referenceName": "Azure-IR-Fact",
+									"type": "IntegrationRuntimeReference"
+								},
+								"traceLevel": "Fine"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Lookup finance metadata",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('SELECT * FROM extractionMetadata where CDSViewName = ''I_GLACCOUNTLINEITEMRAWDATA'' AND inScope = 1')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "extractionMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			}
+		],
+		"parameters": {
+			"p_container": {
+				"type": "string",
+				"defaultValue": "sap"
+			},
+			"p_directory": {
+				"type": "string",
+				"defaultValue": "data"
+			}
+		},
+		"folder": {
+			"name": "Silver_To_Gold"
+		},
+		"annotations": []
+	}
+}

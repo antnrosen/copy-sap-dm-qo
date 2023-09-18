@@ -1,0 +1,52 @@
+{
+	"name": "ds_goldmetadata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_metadata",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "SAP_Table_Id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SAP_System_Id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ODP_CONTEXT",
+				"type": "varchar"
+			},
+			{
+				"name": "ODP_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "Target_File_Name_Silver",
+				"type": "varchar"
+			},
+			{
+				"name": "Target_File_Name_Gold",
+				"type": "varchar"
+			},
+			{
+				"name": "Key_Columns",
+				"type": "varchar"
+			},
+			{
+				"name": "Is_Delta",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "sap_metadata",
+			"table": "SAP_Table"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

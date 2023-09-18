@@ -1,0 +1,108 @@
+{
+	"name": "df_s2s_tc_ptd",
+	"properties": {
+		"folder": {
+			"name": "SAP_to_Silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ImportStaging"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ImportDataTypes"
+				}
+			],
+			"sinks": [
+				{
+					"name": "ColumnMappingSink"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ADLSTarget"
+				}
+			],
+			"transformations": [
+				{
+					"name": "ApplyCorrectDataTypes"
+				},
+				{
+					"name": "AddTrackingColumns",
+					"description": "Creating/updating the columns '_UpdateTimeStamp, _SystemName'"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     p_container as string,",
+				"     p_name as string,",
+				"     p_stagingPath as string,",
+				"     p_systemName as string",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: true,",
+				"     format: 'parquet',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: ($p_stagingPath),",
+				"     fileName: (concat($p_name, '.parquet'))) ~> ImportStaging",
+				"source(output(",
+				"          STRUCOBJN as string,",
+				"          FIELDNAME as string,",
+				"          DATATYPE as string,",
+				"          LENG as string,",
+				"          DECIMALS as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: 'resources',",
+				"     fileName: (concat($p_systemName, '_metadata.parquet'))) ~> ImportDataTypes",
+				"ImportStaging derive(each(match(!isNull(ColumnMappingSink#lookup($p_name,name).FIELDNAME)&&in([\"NUMC\", \"INT1\", \"INT2\", \"INT4\"],ColumnMappingSink#lookup($p_name,name).DATATYPE)), $$ = toInteger($$)),",
+				"          each(match(!isNull(ColumnMappingSink#lookup($p_name,name).FIELDNAME)&&in([\"DATS\"],ColumnMappingSink#lookup($p_name,name).DATATYPE)), $$ = toDate(substring(toString($$), 1, 8), \"yyyyMMdd\"))) ~> ApplyCorrectDataTypes",
+				"ApplyCorrectDataTypes derive({_UpdateTimeStamp} = currentTimestamp(),",
+				"          {_SystemName} = $p_systemName) ~> AddTrackingColumns",
+				"ImportDataTypes sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     keys:[(\"STRUCOBJN\"),(\"FIELDNAME\")],",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: false,",
+				"     saveOrder: 0) ~> ColumnMappingSink",
+				"AddTrackingColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/silver/', $p_name)),",
+				"     overwrite: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> ADLSTarget"
+			]
+		}
+	}
+}

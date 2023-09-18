@@ -1,0 +1,1545 @@
+{
+	"name": "p_s2g_dimension_orchestrate",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup metadata - DIMENSION",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('SELECT * FROM extractionMetadata where type IN (''DIMENSION'')\nAND inScope = 1 \nAND systemName = ''', pipeline().parameters.p_systemName, '''')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "extractionMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For Each Object",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup metadata - DIMENSION",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup metadata - DIMENSION').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 7,
+					"activities": [
+						{
+							"name": "CheckIfGoldTableExists",
+							"description": "On first run, Gold table won't exist",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "GoldDeltaFolderCheck",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_name": {
+											"value": "@item().CDSViewName",
+											"type": "Expression"
+										},
+										"p_systemName": {
+											"value": "@pipeline().parameters.p_systemName",
+											"type": "Expression"
+										},
+										"p_container": {
+											"value": "@pipeline().parameters.p_container",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"modifiedDatetimeStart": "2023-04-12T00:00:00Z",
+									"modifiedDatetimeEnd": "2023-04-12T00:00:00Z",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "Table exist",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "CheckIfGoldTableExists",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('CheckIfGoldTableExists').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "CreateEmptyGoldTableFromSilver_copy1",
+										"type": "ExecuteDataFlow",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"dataflow": {
+												"referenceName": "df_ct_dimension",
+												"type": "DataFlowReference",
+												"parameters": {
+													"p_name": {
+														"value": "'@{item().CDSViewName}'",
+														"type": "Expression"
+													},
+													"p_directory": {
+														"value": "'@{pipeline().parameters.p_directory}'",
+														"type": "Expression"
+													},
+													"p_container": {
+														"value": "'@{pipeline().parameters.p_container}'",
+														"type": "Expression"
+													},
+													"p_systemName": {
+														"value": "'@{pipeline().parameters.p_systemName}'",
+														"type": "Expression"
+													}
+												}
+											},
+											"integrationRuntime": {
+												"referenceName": "Azure-IR",
+												"type": "IntegrationRuntimeReference"
+											},
+											"traceLevel": "Fine"
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "Choose processing flow",
+							"type": "Switch",
+							"dependsOn": [
+								{
+									"activity": "Table exist",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Table exists - SQL Pool",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@if(\n    and(\n\t  or(\n\t\tequals(item().Type, 'DIMENSION'),\n\t\tequals(item().Type, 'HIERARCHY')\n\t\t),\n        equals(item().Delta, true)\n    ), \n    'DimensionToGold_WithDelta',\n    if(\n        and(\n            or(\n                equals(item().Type, 'DIMENSION'), \n                equals(item().Type, 'HIERARCHY')\n                ),\n            equals(item().Delta, false)\n        ), \n        'DimensionToGold_NoDelta',\n        if(\n            equals(item().Type, 'TEXT'),\n            'DimensionToGold_Text',\n            'Other'\n        )\n    )\n)",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "DimensionToGold_WithDelta",
+										"activities": [
+											{
+												"name": "Process to Gold - With Delta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2g_dimension_delta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{item().systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															},
+															"p_sqlschema": {
+																"value": "'@{pipeline().parameters.p_schema}'",
+																"type": "Expression"
+															}
+														},
+														"datasetParameters": {
+															"getMaxIdAndTimestamp": {
+																"p_Table": "extractionScope"
+															},
+															"updateMaxId": {
+																"p_Table": "extractionScope"
+															},
+															"updateLastProcessedTimestamp": {
+																"p_Table": "extractionScope"
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": "sap/stagingSQL"
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									},
+									{
+										"value": "DimensionToGold_NoDelta",
+										"activities": [
+											{
+												"name": "Process to Gold - No Delta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2g_dimension_nodelta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{item().systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															},
+															"p_sqlSchema": {
+																"value": "'@{pipeline().parameters.p_schema}'",
+																"type": "Expression"
+															}
+														},
+														"datasetParameters": {
+															"getMaxId": {
+																"p_Table": "extractionScope"
+															},
+															"updateMaxId": {
+																"p_Table": "extractionScope"
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": "sap/stagingSQL"
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									}
+								]
+							}
+						},
+						{
+							"name": "CheckIfTableExists - SQLPool",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_SQLPool",
+									"type": "DatasetReference",
+									"parameters": {
+										"SAPTable": {
+											"value": "@item().CDSViewName",
+											"type": "Expression"
+										},
+										"schemaName": {
+											"value": "@pipeline().parameters.p_schema",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								]
+							}
+						},
+						{
+							"name": "Table exists - SQL Pool",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "CheckIfTableExists - SQLPool",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('CheckIfTableExists - SQLPool').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "GetCreateStmt - DIMENSION",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"sqlReaderStoredProcedureName": "[dbo].[GenerateCreateTableStatements]",
+												"storedProcedureParameters": {
+													"CDSViewName": {
+														"type": "String",
+														"value": {
+															"value": "@item().CDSViewName",
+															"type": "Expression"
+														}
+													},
+													"schemaName": {
+														"type": "String",
+														"value": {
+															"value": "@pipeline().parameters.p_schema",
+															"type": "Expression"
+														}
+													},
+													"ViewType": {
+														"type": "String",
+														"value": "DIMENSION"
+													}
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"dataset": {
+												"referenceName": "ds_metadata",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_Table": "extractionScope"
+												}
+											},
+											"firstRowOnly": true
+										}
+									},
+									{
+										"name": "CreateTable - DIMENSION",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "GetCreateStmt - DIMENSION",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "ls_SQLPool",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "@activity('GetCreateStmt - DIMENSION').output.firstRow.CreateTableStatement",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									},
+									{
+										"name": "AddDefaultValue - DIMENSION",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "CreateTable - DIMENSION",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "ls_SQLPool",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "NonQuery",
+													"text": {
+														"value": "@concat('INSERT INTO ', pipeline().parameters.p_schema, '.', item().CDSViewName, ' ([Key]) VALUES (-1)')",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "For Each Object - TEXT",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup metadata - TEXT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup metadata - TEXT').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 10,
+					"activities": [
+						{
+							"name": "CheckIfGoldTableExists - TEXT",
+							"description": "On first run, Gold table won't exist",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "GoldDeltaFolderCheck",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_name": {
+											"value": "@item().CDSViewName",
+											"type": "Expression"
+										},
+										"p_systemName": {
+											"value": "@pipeline().parameters.p_systemName",
+											"type": "Expression"
+										},
+										"p_container": {
+											"value": "@pipeline().parameters.p_container",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"modifiedDatetimeStart": "2023-04-12T00:00:00Z",
+									"modifiedDatetimeEnd": "2023-04-12T00:00:00Z",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "Table exist - TEXT",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "CheckIfGoldTableExists - TEXT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('CheckIfGoldTableExists - TEXT').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "CreateEmptyGoldTableFromSilver_copy1_copy1",
+										"type": "ExecuteDataFlow",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"dataflow": {
+												"referenceName": "df_ct_text",
+												"type": "DataFlowReference",
+												"parameters": {
+													"p_context": {
+														"value": "'@{item().Context}'",
+														"type": "Expression"
+													},
+													"p_ODPName": {
+														"value": "'@{item().ODPName}'",
+														"type": "Expression"
+													},
+													"p_name": {
+														"value": "'@{item().CDSViewName}'",
+														"type": "Expression"
+													},
+													"p_directory": {
+														"value": "'@{pipeline().parameters.p_directory}'",
+														"type": "Expression"
+													},
+													"p_container": {
+														"value": "'@{pipeline().parameters.p_container}'",
+														"type": "Expression"
+													},
+													"p_systemName": {
+														"value": "'@{pipeline().parameters.p_systemName}'",
+														"type": "Expression"
+													},
+													"p_keyFields": {
+														"value": "json(item().KeyFields)",
+														"type": "Expression"
+													}
+												}
+											},
+											"integrationRuntime": {
+												"referenceName": "Azure-IR",
+												"type": "IntegrationRuntimeReference"
+											},
+											"traceLevel": "Fine"
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "Choose processing flow - TEXT",
+							"type": "Switch",
+							"dependsOn": [
+								{
+									"activity": "Table exist - TEXT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "If Condition1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@if(\n    and(\n\t\tequals(item().Type, 'TEXT')\n\t\t,\n        equals(item().Delta, true)\n    ), \n    'TextToGold_WithDelta',\n    if(\n        and(\n            equals(item().Type, 'TEXT'), \n            equals(item().Delta, false)\n        ), \n        'TextToGold_NoDelta', 'Other'\n    )\n)",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "TextToGold_WithDelta",
+										"activities": [
+											{
+												"name": "Text to Gold - With Delta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2g_text_delta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															},
+															"p_sqlschema": {
+																"value": "'@{pipeline().parameters.p_schema}'",
+																"type": "Expression"
+															},
+															"p_relatedView": {
+																"value": "'@{item().relatedCDSViewName}'",
+																"type": "Expression"
+															}
+														},
+														"datasetParameters": {
+															"getMaxIdAndTimestamp": {
+																"p_Table": "extractionScope"
+															},
+															"updateLastProcessedTimestamp": {
+																"p_Table": "extractionScope"
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": "sap/stagingSQL"
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									},
+									{
+										"value": "TextToGold_NoDelta",
+										"activities": [
+											{
+												"name": "Text to Gold - No Delta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2g_text_nodelta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															},
+															"p_sqlschema": {
+																"value": "'@{pipeline().parameters.p_schema}'",
+																"type": "Expression"
+															},
+															"p_relatedView": {
+																"value": "'@{item().relatedCDSViewName}'",
+																"type": "Expression"
+															}
+														},
+														"datasetParameters": {
+															"updateLastProcessedTimestamp": {
+																"p_Table": "extractionScope"
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": "sap/stagingSQL"
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									}
+								]
+							}
+						},
+						{
+							"name": "CheckIfTableExists - SQLPool - TEXT",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_SQLPool",
+									"type": "DatasetReference",
+									"parameters": {
+										"SAPTable": {
+											"value": "@item().CDSViewName",
+											"type": "Expression"
+										},
+										"schemaName": {
+											"value": "@pipeline().parameters.p_schema",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								]
+							}
+						},
+						{
+							"name": "If Condition1",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "CheckIfTableExists - SQLPool - TEXT",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('CheckIfTableExists - SQLPool - TEXT').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "GetCreateStmt - TEXT",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"sqlReaderStoredProcedureName": "[dbo].[GenerateCreateTableStatements]",
+												"storedProcedureParameters": {
+													"CDSViewName": {
+														"type": "String",
+														"value": {
+															"value": "@item().CDSViewName",
+															"type": "Expression"
+														}
+													},
+													"schemaName": {
+														"type": "String",
+														"value": {
+															"value": "@pipeline().parameters.p_schema",
+															"type": "Expression"
+														}
+													},
+													"ViewType": {
+														"type": "String",
+														"value": "DIMENSION"
+													}
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"dataset": {
+												"referenceName": "ds_metadata",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_Table": "extractionScope"
+												}
+											},
+											"firstRowOnly": true
+										}
+									},
+									{
+										"name": "CreateTable - TEXT",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "GetCreateStmt - TEXT",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "ls_SQLPool",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "@activity('GetCreateStmt - TEXT').output.firstRow.CreateTableStatement",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Lookup metadata - TEXT",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "For Each Object",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "For Each Object - DIMENSION-TD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('SELECT * FROM extractionMetadata where type IN (''TEXT'')\nAND relatedCDSViewName IS NOT NULL\nAND inScope = 1 \nAND systemName = ''', pipeline().parameters.p_systemName, '''')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "extractionMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Lookup metadata - DIMENSION-TD",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('SELECT * FROM extractionMetadata where type IN (''DIMENSION-TD'', ''HIERARCHY'')\nAND inScope = 1 \nAND systemName = ''', pipeline().parameters.p_systemName, '''')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "extractionMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For Each Object - DIMENSION-TD",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup metadata - DIMENSION-TD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup metadata - DIMENSION-TD').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 3,
+					"activities": [
+						{
+							"name": "CheckIfGoldTableExists - DIMENSION-TD",
+							"description": "On first run, Gold table won't exist",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "GoldDeltaFolderCheck",
+									"type": "DatasetReference",
+									"parameters": {
+										"p_name": {
+											"value": "@item().CDSViewName",
+											"type": "Expression"
+										},
+										"p_systemName": {
+											"value": "@pipeline().parameters.p_systemName",
+											"type": "Expression"
+										},
+										"p_container": {
+											"value": "@pipeline().parameters.p_container",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"modifiedDatetimeStart": "2023-04-12T00:00:00Z",
+									"modifiedDatetimeEnd": "2023-04-12T00:00:00Z",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "Table exist - DIMENSION-TD",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "CheckIfGoldTableExists - DIMENSION-TD",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('CheckIfGoldTableExists - DIMENSION-TD').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "CreateEmptyGoldTableFromSilver_copy1_copy1_copy1",
+										"type": "ExecuteDataFlow",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"dataflow": {
+												"referenceName": "df_ct_dimensiontd",
+												"type": "DataFlowReference",
+												"parameters": {
+													"p_name": {
+														"value": "'@{item().CDSViewName}'",
+														"type": "Expression"
+													},
+													"p_directory": {
+														"value": "'@{pipeline().parameters.p_directory}'",
+														"type": "Expression"
+													},
+													"p_container": {
+														"value": "'@{pipeline().parameters.p_container}'",
+														"type": "Expression"
+													},
+													"p_systemName": {
+														"value": "'@{pipeline().parameters.p_systemName}'",
+														"type": "Expression"
+													}
+												}
+											},
+											"integrationRuntime": {
+												"referenceName": "Azure-IR",
+												"type": "IntegrationRuntimeReference"
+											},
+											"traceLevel": "Fine"
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "Choose processing flow - DIMESNION-TD",
+							"type": "Switch",
+							"dependsOn": [
+								{
+									"activity": "Table exist - DIMENSION-TD",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "If Table Exists - DIMENSION-TD",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@if(\n    equals(item().Delta, true),\n    'DimesnionTDToGold_WithDelta',\n    'DimesnionTDToGold_NoDelta'\n)",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "DimesnionTDToGold_WithDelta",
+										"activities": [
+											{
+												"name": "DimensionTDToGold",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2g_dimensiontd_delta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															},
+															"p_sqlschema": {
+																"value": "'@{pipeline().parameters.p_schema}'",
+																"type": "Expression"
+															}
+														},
+														"datasetParameters": {
+															"getMaxIdAndTimestamp": {
+																"p_Table": "extractionScope"
+															},
+															"updateLastProcessedTimestamp": {
+																"p_Table": "extractionScope"
+															},
+															"updateMaxId": {
+																"p_Table": "extractionScope"
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": "sap/stagingSQL"
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									},
+									{
+										"value": "DimesnionTDToGold_NoDelta",
+										"activities": [
+											{
+												"name": "DimensionTDToGoldNoDelta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2g_dimensiontd_nodelta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															},
+															"p_sqlschema": {
+																"value": "'@{pipeline().parameters.p_schema}'",
+																"type": "Expression"
+															}
+														},
+														"datasetParameters": {
+															"getMaxIdAndTimestamp": {
+																"p_Table": "extractionScope"
+															},
+															"updateLastProcessedTimestamp": {
+																"p_Table": "extractionScope"
+															},
+															"updateMaxId": {
+																"p_Table": "extractionScope"
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": "sap/stagingSQL"
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									}
+								]
+							}
+						},
+						{
+							"name": "CheckIfTableExists - SQLPool - DIMENSION-TD",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_SQLPool",
+									"type": "DatasetReference",
+									"parameters": {
+										"SAPTable": {
+											"value": "@item().CDSViewName",
+											"type": "Expression"
+										},
+										"schemaName": {
+											"value": "@pipeline().parameters.p_schema",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								]
+							}
+						},
+						{
+							"name": "If Table Exists - DIMENSION-TD",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "CheckIfTableExists - SQLPool - DIMENSION-TD",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('CheckIfTableExists - SQLPool - DIMENSION-TD').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "GetCreateStmt - DIMENSION-TD",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"sqlReaderStoredProcedureName": "[dbo].[GenerateCreateTableStatements]",
+												"storedProcedureParameters": {
+													"CDSViewName": {
+														"type": "String",
+														"value": {
+															"value": "@item().CDSViewName",
+															"type": "Expression"
+														}
+													},
+													"schemaName": {
+														"type": "String",
+														"value": {
+															"value": "@pipeline().parameters.p_schema",
+															"type": "Expression"
+														}
+													},
+													"ViewType": {
+														"type": "String",
+														"value": "DIMENSION-TD"
+													}
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"dataset": {
+												"referenceName": "ds_metadata",
+												"type": "DatasetReference",
+												"parameters": {
+													"p_Table": "extractionScope"
+												}
+											},
+											"firstRowOnly": true
+										}
+									},
+									{
+										"name": "CreateTable - DIMENSION-TD",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "GetCreateStmt - DIMENSION-TD",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "ls_SQLPool",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "@activity('GetCreateStmt - DIMENSION-TD').output.firstRow.CreateTableStatement",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									},
+									{
+										"name": "AddDefaultValue - DIMENSION-TD",
+										"type": "Script",
+										"dependsOn": [
+											{
+												"activity": "CreateTable - DIMENSION-TD",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "ls_SQLPool",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "@concat('INSERT INTO ', pipeline().parameters.p_schema, '.', item().CDSViewName, ' ([Key], [VALIDITYENDDATE], [VALIDITYSTARTDATE]) VALUES (-1, ''9999-12-31'', ''0001-01-01'')')",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"p_systemName": {
+				"type": "string",
+				"defaultValue": "PM4CLNT400"
+			},
+			"p_directory": {
+				"type": "string",
+				"defaultValue": "data"
+			},
+			"p_container": {
+				"type": "string",
+				"defaultValue": "sap"
+			},
+			"p_schema": {
+				"type": "string",
+				"defaultValue": "dmgold"
+			}
+		},
+		"folder": {
+			"name": "Silver_To_Gold"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-14T16:01:28Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

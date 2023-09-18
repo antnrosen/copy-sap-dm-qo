@@ -1,0 +1,10 @@
+{
+	"name": "synapse-ws-sqlOnDemand--sap-dm-synapse-v2",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/53990dba-8128-4100-bb6d-ed38861c9f8f/resourceGroups/sap-dm-synapse-v2/providers/Microsoft.Synapse/workspaces/sap-dm-synapse-v2",
+		"groupId": "sqlOnDemand",
+		"fqdns": [
+			"sap-dm-synapse-v2-ondemand.3bc31399-718e-4a7e-b040-98f9bc9b79b1.sql.azuresynapse.net"
+		]
+	}
+}

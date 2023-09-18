@@ -1,0 +1,20 @@
+{
+	"name": "PROFITCENTERHIERARCHYNODEFINAL",
+	"properties": {
+		"folder": {
+			"name": "Hierarchy_View_Scripts"
+		},
+		"content": {
+			"query": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n\nCREATE VIEW [dmgold].[PROFITCENTERHIERARCHYNODEFINAL]\nAS SELECT h.*, ht.LANGUAGE, ht.[_ISOLanguage], ht.hierarchynodetext as HIERARCHYNODETEXT \n FROM [dmgold].[I_PROFITCENTERHIERARCHYNODE] h left outer JOIN\n [dmgold].[I_PROFITCENTERHIERARCHYNODET] ht ON\n h.[key] = ht.[key]\n and h.[_SystemName] = ht.[_SystemName]\nand h.validityenddate = ht.validityenddate\n where h.nodetype in ('R','N')\n \n UNION\n\n SELECT h.*, ht.LANGUAGE, ht.[_ISOLanguage],ht.[PROFITCENTERNAME] as HIERARCHYNODETEXT \n FROM [dmgold].[I_PROFITCENTERHIERARCHYNODE] h left outer JOIN\n [dmgold].[I_PROFITCENTERTEXT] ht ON\n h.[controllingarea] = ht.[controllingarea]\n and h.[profitcenter] = ht.[profitcenter]\n and h.validityenddate = ht.validityenddate\nand h.[_SystemName] = ht.[_SystemName]\n where h.nodetype ='L';\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"name": "synapse-ws-custstgacct--sap-dm-synapse-v2-sapdmadls",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/53990dba-8128-4100-bb6d-ed38861c9f8f/resourceGroups/sap-dm-synapse-v2/providers/Microsoft.Storage/storageAccounts/sapdmadls",
+		"groupId": "dfs",
+		"fqdns": [
+			"sapdmadls.dfs.core.windows.net"
+		]
+	}
+}

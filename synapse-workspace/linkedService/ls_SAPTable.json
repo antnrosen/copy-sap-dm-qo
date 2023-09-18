@@ -1,0 +1,52 @@
+{
+	"name": "ls_SAPTable",
+	"properties": {
+		"parameters": {
+			"p_serverName": {
+				"type": "string",
+				"defaultValue": "10.15.0.6"
+			},
+			"p_systemNumber": {
+				"type": "string",
+				"defaultValue": "01"
+			},
+			"p_clientID": {
+				"type": "string",
+				"defaultValue": "400"
+			},
+			"p_username": {
+				"type": "string",
+				"defaultValue": "pm4admin"
+			},
+			"p_secretName": {
+				"type": "string",
+				"defaultValue": "PM4CLNT400"
+			}
+		},
+		"annotations": [],
+		"type": "SapTable",
+		"typeProperties": {
+			"clientId": "@{linkedService().p_clientID}",
+			"sncMode": false,
+			"userName": "@{linkedService().p_username}",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_keyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@linkedService().p_secretName",
+					"type": "Expression"
+				}
+			},
+			"server": "@{linkedService().p_serverName}",
+			"systemNumber": "@{linkedService().p_systemNumber}"
+		},
+		"connectVia": {
+			"referenceName": "sap-dm-synapse-v2-ir",
+			"type": "IntegrationRuntimeReference"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/linkedservices"
+}

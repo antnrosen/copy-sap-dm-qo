@@ -1,0 +1,20 @@
+{
+	"name": "vtMOVEMENTCATEGORYTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtMOVEMENTCATEGORYTEXT] AS\nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,MOVEMENTCATEGORYKeys AS (\nSELECT distinct [Key]\n,[_SystemName]\n,[ASSETACCTTRANSCLASSFCTN]\n,[ASSETACCTTRANSCLASSFCTN] AS ASSETACCTTRANSCLASSFCTNNAME\n FROM [dmgold].[I_MOVEMENTCATEGORY]\n) \n,MOVEMENTCATEGORYKeysLanguages AS (\nSELECT * FROM MOVEMENTCATEGORYKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,MOVEMENTCATEGORYTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_MOVEMENTCATEGORYTEXT]\nWHERE [Key] IS NOT NULL\n)\n,MOVEMENTCATEGORYTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.ASSETACCTTRANSCLASSFCTN, kl.ASSETACCTTRANSCLASSFCTN) AS ASSETACCTTRANSCLASSFCTN, \n    COALESCE(txt.ASSETACCTTRANSCLASSFCTNNAME, kl.ASSETACCTTRANSCLASSFCTNNAME) AS ASSETACCTTRANSCLASSFCTNNAME\nFROM MOVEMENTCATEGORYKeysLanguages kl\nFULL OUTER JOIN MOVEMENTCATEGORYTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM MOVEMENTCATEGORYTextprefill  \n AS SourceTable PIVOT(max([ASSETACCTTRANSCLASSFCTNNAME]) FOR [_ISOLanguage] IN\n('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

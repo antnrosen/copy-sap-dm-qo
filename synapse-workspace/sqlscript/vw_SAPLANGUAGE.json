@@ -1,0 +1,20 @@
+{
+	"name": "vw_SAPLANGUAGE",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n\nCREATE VIEW [dmgold].[vw_SAPLANGUAGE]\nAS SELECT DISTINCT [dmgold].[I_LANGUAGE].[LANGUAGE], [dmgold].[I_LANGUAGETEXT].[LANGUAGENAME], [dmgold].[I_LANGUAGETEXT].[LANGUAGECODE]\nFROM [dmgold].[I_LANGUAGE]\nLEFT OUTER JOIN [dmgold].[I_LANGUAGETEXT]\nON [dmgold].[I_LANGUAGE].[LANGUAGE] = [dmgold].[I_LANGUAGETEXT].[LANGUAGECODE] COLLATE SQL_Latin1_General_CP1_CS_AS \nWHERE [dmgold].[I_LANGUAGETEXT].[LANGUAGE] = [dmgold].[I_LANGUAGETEXT].[LANGUAGECODE] COLLATE SQL_Latin1_General_CP1_CS_AS;\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

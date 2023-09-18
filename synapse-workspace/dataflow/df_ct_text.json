@@ -1,0 +1,77 @@
+{
+	"name": "df_ct_text",
+	"properties": {
+		"folder": {
+			"name": "SIlver_To_Gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SilverSource"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldTarget"
+				}
+			],
+			"transformations": [
+				{
+					"name": "ExcludeAllRecords"
+				},
+				{
+					"name": "AddKeyColumn"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     p_context as string,",
+				"     p_ODPName as string,",
+				"     p_name as string,",
+				"     p_directory as string,",
+				"     p_container as string,",
+				"     p_systemName as string,",
+				"     p_keyFields as string[]",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/silver/', $p_name))) ~> SilverSource",
+				"AddKeyColumn filter(false()) ~> ExcludeAllRecords",
+				"SilverSource derive(Key = toInteger(0),",
+				"          each(match(true()), $$ = $$),",
+				"          each(match(name=='LANGUAGE'), '_ISOLanguage' = toString(''))) ~> AddKeyColumn",
+				"ExcludeAllRecords sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/gold/', $p_name)),",
+				"     truncate: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> GoldTarget"
+			]
+		}
+	}
+}

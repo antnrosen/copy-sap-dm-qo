@@ -1,0 +1,573 @@
+{
+	"name": "p_s2s_fact_extract",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup metadata",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('SELECT * FROM extractionMetadata where inScope = 1 AND Type = ''FACT'' AND systemName = ''', pipeline().parameters.p_systemName, '''')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "extractionMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For Each Object",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set GUID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup metadata').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 5,
+					"activities": [
+						{
+							"name": "Select Connector",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@if(\n    and(\n        or(\n            equals(item().Context, 'ABAP_CDS'), \n            equals(item().Context, 'SAPI')\n            ),\n        equals(item().Delta, true)\n    ), \n    'df_ODP_WithDelta',\n    if(\n        and(\n            or(\n                equals(item().Context, 'ABAP_CDS'), \n                equals(item().Context, 'SAPI')\n                ),\n            equals(item().Delta, false)\n        ), \n        'df_ODP_NoDelta',\n        if(\n            equals(item().Context, 'SAP_Table'),\n            'p_SAPTable',\n            'Other'\n        )\n    )\n)",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "df_ODP_WithDelta",
+										"activities": [
+											{
+												"name": "df_ODP_WithDelta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [
+													{
+														"activity": "Get checkpoint Id",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [
+													{
+														"name": "System name",
+														"value": "@pipeline().parameters.p_systemName"
+													},
+													{
+														"name": "CDS View name",
+														"value": "@item().CDSViewName"
+													}
+												],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2s_cdc_delta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_context": {
+																"value": "'@{item().Context}'",
+																"type": "Expression"
+															},
+															"p_ODPName": {
+																"value": "'@{item().ODPName}'",
+																"type": "Expression"
+															},
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															},
+															"p_keyFields": {
+																"value": "@json(item().KeyFields)",
+																"type": "Expression"
+															}
+														},
+														"linkedServiceParameters": {
+															"SAPSource": {
+																"linkedService": {
+																	"p_serverName": {
+																		"value": "@pipeline().parameters.p_serverName",
+																		"type": "Expression"
+																	},
+																	"p_systemNumber": {
+																		"value": "@pipeline().parameters.p_systemNumber",
+																		"type": "Expression"
+																	},
+																	"p_clientID": {
+																		"value": "@pipeline().parameters.p_clientID",
+																		"type": "Expression"
+																	},
+																	"p_subscriberName": {
+																		"value": "@pipeline().parameters.p_subscriberName",
+																		"type": "Expression"
+																	},
+																	"p_username": {
+																		"value": "@pipeline().parameters.p_username",
+																		"type": "Expression"
+																	},
+																	"p_secretName": {
+																		"value": "@pipeline().parameters.p_secretName",
+																		"type": "Expression"
+																	}
+																}
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": {
+															"value": "@concat(pipeline().parameters.p_container, '/staging/')",
+															"type": "Expression"
+														}
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine",
+													"continuationSettings": {
+														"customizedCheckpointKey": {
+															"value": "@activity('Get checkpoint Id').output.firstRow.CheckpointId",
+															"type": "Expression"
+														}
+													}
+												}
+											},
+											{
+												"name": "Get checkpoint Id",
+												"type": "Lookup",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "AzureSqlSource",
+														"sqlReaderStoredProcedureName": "[dbo].[GetCheckpointId]",
+														"storedProcedureParameters": {
+															"CDSViewName": {
+																"type": "String",
+																"value": {
+																	"value": "@item().CDSViewName",
+																	"type": "Expression"
+																}
+															},
+															"SystemName": {
+																"type": "String",
+																"value": {
+																	"value": "@pipeline().parameters.p_systemName",
+																	"type": "Expression"
+																}
+															}
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"dataset": {
+														"referenceName": "ds_metadata",
+														"type": "DatasetReference",
+														"parameters": {
+															"p_Table": "extractionScope"
+														}
+													},
+													"firstRowOnly": true
+												}
+											}
+										]
+									},
+									{
+										"value": "df_ODP_NoDelta",
+										"activities": [
+											{
+												"name": "df_ODP_NoDelta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [
+													{
+														"name": "System name",
+														"value": "@pipeline().parameters.p_systemName"
+													},
+													{
+														"name": "CDS View name",
+														"value": "@item().CDSViewName"
+													}
+												],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2s_cdc_nodelta",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_context": {
+																"value": "'@{item().Context}'",
+																"type": "Expression"
+															},
+															"p_ODPName": {
+																"value": "'@{item().ODPName}'",
+																"type": "Expression"
+															},
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_directory": {
+																"value": "'@{pipeline().parameters.p_directory}'",
+																"type": "Expression"
+															},
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															}
+														},
+														"linkedServiceParameters": {
+															"SAPSource": {
+																"linkedService": {
+																	"p_serverName": {
+																		"value": "@pipeline().parameters.p_serverName",
+																		"type": "Expression"
+																	},
+																	"p_systemNumber": {
+																		"value": "@pipeline().parameters.p_systemNumber",
+																		"type": "Expression"
+																	},
+																	"p_clientID": {
+																		"value": "@pipeline().parameters.p_clientID",
+																		"type": "Expression"
+																	},
+																	"p_subscriberName": {
+																		"value": "@pipeline().parameters.p_subscriberName",
+																		"type": "Expression"
+																	},
+																	"p_username": {
+																		"value": "@pipeline().parameters.p_username",
+																		"type": "Expression"
+																	},
+																	"p_secretName": {
+																		"value": "@pipeline().parameters.p_secretName",
+																		"type": "Expression"
+																	}
+																}
+															}
+														}
+													},
+													"staging": {
+														"linkedService": {
+															"referenceName": "ls_dataLake",
+															"type": "LinkedServiceReference"
+														},
+														"folderPath": {
+															"value": "@concat(pipeline().parameters.p_container, '/staging/')",
+															"type": "Expression"
+														}
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									},
+									{
+										"value": "p_SAPTable",
+										"activities": [
+											{
+												"name": "Copy SAP Table",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [
+													{
+														"name": "System name",
+														"value": "@pipeline().parameters.p_systemName"
+													},
+													{
+														"name": "CDS View name",
+														"value": "@item().CDSViewName"
+													}
+												],
+												"typeProperties": {
+													"source": {
+														"type": "SapTableSource",
+														"partitionOption": "None"
+													},
+													"sink": {
+														"type": "ParquetSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "ParquetWriteSettings"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "ds_SAPTable",
+														"type": "DatasetReference",
+														"parameters": {
+															"p_Table": {
+																"value": "@item().ODPName",
+																"type": "Expression"
+															},
+															"p_serverName": {
+																"value": "@pipeline().parameters.p_serverName",
+																"type": "Expression"
+															},
+															"p_systemNumber": {
+																"value": "@pipeline().parameters.p_systemNumber",
+																"type": "Expression"
+															},
+															"p_clientID": {
+																"value": "@pipeline().parameters.p_clientID",
+																"type": "Expression"
+															},
+															"p_username": {
+																"value": "@pipeline().parameters.p_username",
+																"type": "Expression"
+															},
+															"p_secretName": {
+																"value": "@pipeline().parameters.p_secretName",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "ds_dataLake",
+														"type": "DatasetReference",
+														"parameters": {
+															"p_container": {
+																"value": "@pipeline().parameters.p_container",
+																"type": "Expression"
+															},
+															"p_path": {
+																"value": "@concat('staging/ct_', pipeline().parameters.p_systemName, '_', item().CDSViewName, '_', variables('ct_path'))",
+																"type": "Expression"
+															},
+															"p_name": {
+																"value": "@item().CDSViewName",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											},
+											{
+												"name": "Convert to delta",
+												"type": "ExecuteDataFlow",
+												"dependsOn": [
+													{
+														"activity": "Copy SAP Table",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [
+													{
+														"name": "System name",
+														"value": "@pipeline().parameters.p_systemName"
+													},
+													{
+														"name": "CDS View name",
+														"value": "@item().CDSViewName"
+													}
+												],
+												"typeProperties": {
+													"dataflow": {
+														"referenceName": "df_s2s_tc_ptd",
+														"type": "DataFlowReference",
+														"parameters": {
+															"p_container": {
+																"value": "'@{pipeline().parameters.p_container}'",
+																"type": "Expression"
+															},
+															"p_name": {
+																"value": "'@{item().CDSViewName}'",
+																"type": "Expression"
+															},
+															"p_stagingPath": {
+																"value": "'@{concat('staging/ct_', pipeline().parameters.p_systemName, '_', item().CDSViewName, '_', variables('ct_path'))}'",
+																"type": "Expression"
+															},
+															"p_systemName": {
+																"value": "'@{pipeline().parameters.p_systemName}'",
+																"type": "Expression"
+															}
+														}
+													},
+													"integrationRuntime": {
+														"referenceName": "Azure-IR",
+														"type": "IntegrationRuntimeReference"
+													},
+													"traceLevel": "Fine"
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set GUID",
+				"description": "Set GUID for Copy Data activity",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ct_path",
+					"value": {
+						"value": "@guid()",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_serverName": {
+				"type": "string"
+			},
+			"p_systemNumber": {
+				"type": "string"
+			},
+			"p_clientID": {
+				"type": "string"
+			},
+			"p_subscriberName": {
+				"type": "string"
+			},
+			"p_username": {
+				"type": "string"
+			},
+			"p_secretName": {
+				"type": "string"
+			},
+			"p_systemName": {
+				"type": "string"
+			},
+			"p_directory": {
+				"type": "string",
+				"defaultValue": "data"
+			},
+			"p_container": {
+				"type": "string",
+				"defaultValue": "sap"
+			}
+		},
+		"variables": {
+			"ct_path": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "SAP_To_Silver"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-14T11:21:11Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

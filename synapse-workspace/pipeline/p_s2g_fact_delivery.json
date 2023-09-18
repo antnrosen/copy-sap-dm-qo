@@ -1,0 +1,190 @@
+{
+	"name": "p_s2g_fact_delivery",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup delivery metadata",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('SELECT * FROM extractionMetadata where CDSViewName = ''I_DELIVERYDOCUMENT'' AND inScope = 1')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "extractionMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For each system",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup delivery metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup delivery metadata').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "DeliveryDocumentFactToGold",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "df_s2g_fact_deliverydocument",
+									"type": "DataFlowReference",
+									"parameters": {
+										"p_name": {
+											"value": "'@{'I_DELIVERYDOCUMENT'}'",
+											"type": "Expression"
+										},
+										"p_directory": {
+											"value": "'@{pipeline().parameters.p_directory}'",
+											"type": "Expression"
+										},
+										"p_container": {
+											"value": "'@{pipeline().parameters.p_container}'",
+											"type": "Expression"
+										},
+										"p_systemName": {
+											"value": "'@{item().systemName}'",
+											"type": "Expression"
+										},
+										"p_keyFields": "['DELIVERYDOCUMENT']"
+									},
+									"datasetParameters": {
+										"getTimestamp": {
+											"p_Table": "extractionScope"
+										},
+										"updateLastProcessedTimestamp": {
+											"p_Table": "extractionScope"
+										}
+									}
+								},
+								"staging": {
+									"linkedService": {
+										"referenceName": "ls_dataLake",
+										"type": "LinkedServiceReference"
+									},
+									"folderPath": "sap/stagingSQL"
+								},
+								"integrationRuntime": {
+									"referenceName": "Azure-IR-Fact",
+									"type": "IntegrationRuntimeReference"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "DeliveryDocumentItemFactToGold",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "df_s2g_fact_deliveryitem",
+									"type": "DataFlowReference",
+									"parameters": {
+										"p_name": {
+											"value": "'@{'I_DELIVERYDOCUMENTITEM'}'",
+											"type": "Expression"
+										},
+										"p_directory": {
+											"value": "'@{pipeline().parameters.p_directory}'",
+											"type": "Expression"
+										},
+										"p_container": {
+											"value": "'@{pipeline().parameters.p_container}'",
+											"type": "Expression"
+										},
+										"p_systemName": {
+											"value": "'@{item().systemName}'",
+											"type": "Expression"
+										},
+										"p_keyFields": "['DELIVERYDOCUMENT','DELIVERYDOCUMENTITEM']"
+									},
+									"datasetParameters": {
+										"getTimestamp": {
+											"p_Table": "extractionScope"
+										},
+										"updateLastProcessedTimestamp": {
+											"p_Table": "extractionScope"
+										}
+									}
+								},
+								"staging": {
+									"linkedService": {
+										"referenceName": "ls_dataLake",
+										"type": "LinkedServiceReference"
+									},
+									"folderPath": "sap/stagingSQL"
+								},
+								"integrationRuntime": {
+									"referenceName": "Azure-IR-Fact",
+									"type": "IntegrationRuntimeReference"
+								},
+								"traceLevel": "Fine"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"p_container": {
+				"type": "string",
+				"defaultValue": "sap"
+			},
+			"p_directory": {
+				"type": "string",
+				"defaultValue": "data"
+			}
+		},
+		"folder": {
+			"name": "Silver_To_Gold"
+		},
+		"annotations": []
+	}
+}

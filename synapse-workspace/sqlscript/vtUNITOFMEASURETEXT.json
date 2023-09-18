@@ -1,0 +1,20 @@
+{
+	"name": "vtUNITOFMEASURETEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtUNITOFMEASURETEXT] AS\nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,UNITOFMEASUREKeys AS (\nSELECT distinct [Key]\n,[_SystemName]\n,[UNITOFMEASURE]\n,[UNITOFMEASURE] AS UNITOFMEASURENAME\n FROM [dmgold].[I_UNITOFMEASURE]\n) \n,UNITOFMEASUREKeysLanguages AS (\nSELECT * FROM UNITOFMEASUREKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,UNITOFMEASURETextWithoutNull AS (\nSELECT * FROM [dmgold].[I_UNITOFMEASURETEXT]\nWHERE [Key] IS NOT NULL\n)\n,UNITOFMEASURETextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.UNITOFMEASURE, kl.UNITOFMEASURE) AS UNITOFMEASURE, \n    COALESCE(txt.UNITOFMEASURENAME, kl.UNITOFMEASURENAME) AS UNITOFMEASURENAME\nFROM UNITOFMEASUREKeysLanguages kl\nFULL OUTER JOIN UNITOFMEASURETextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM UNITOFMEASURETextprefill  \n AS SourceTable PIVOT(max([UNITOFMEASURENAME]) FOR [_ISOLanguage] IN\n('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

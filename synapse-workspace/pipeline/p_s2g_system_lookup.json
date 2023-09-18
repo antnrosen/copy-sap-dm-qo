@@ -1,0 +1,85 @@
+{
+	"name": "p_s2g_system_lookup",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup SAP System",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_Table": "SAPSystem"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For each SAP system",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup SAP System",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup SAP System').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Process data to Gold",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "p_s2g_dimension_orchestrate",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"p_systemName": {
+										"value": "@item().systemName",
+										"type": "Expression"
+									},
+									"p_directory": "data",
+									"p_container": "sap",
+									"p_schema": "dmgold"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "Silver_To_Gold"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-14T12:17:17Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

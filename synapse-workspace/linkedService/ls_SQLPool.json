@@ -1,0 +1,14 @@
+{
+	"name": "ls_SQLPool",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDW",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=qo-sap-dm-test.sql.azuresynapse.net;Initial Catalog=sapdmtest"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

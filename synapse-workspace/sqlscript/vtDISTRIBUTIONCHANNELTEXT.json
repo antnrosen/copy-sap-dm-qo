@@ -1,0 +1,20 @@
+{
+	"name": "vtDISTRIBUTIONCHANNELTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtDISTRIBUTIONCHANNELTEXT]\nAS \nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,DISTRIBUTIONCHANNELKeys AS (\nSELECT DISTINCT \n    [Key]\n    ,[_UpdateTimeStamp]\n    ,[_SystemName]\n    ,[DISTRIBUTIONCHANNEL]\n    ,[DISTRIBUTIONCHANNEL] AS DISTRIBUTIONCHANNELNAME\nFROM [dmgold].[I_DISTRIBUTIONCHANNEL]\n) \n,DISTRIBUTIONCHANNELKeysLanguages AS (\nSELECT * FROM DISTRIBUTIONCHANNELKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,DISTRIBUTIONCHANNELTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_DISTRIBUTIONCHANNELTEXT]\nWHERE [Key] IS NOT NULL\n)\n,DISTRIBUTIONCHANNELTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.[DISTRIBUTIONCHANNEL], kl.[DISTRIBUTIONCHANNEL]) AS DISTRIBUTIONCHANNEL, \n    COALESCE(txt.DISTRIBUTIONCHANNELNAME, kl.DISTRIBUTIONCHANNELNAME) AS DISTRIBUTIONCHANNELNAME\nFROM DISTRIBUTIONCHANNELKeysLanguages kl\nFULL OUTER JOIN DISTRIBUTIONCHANNELTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\nAND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM DISTRIBUTIONCHANNELTextprefill   \n AS SourceTable PIVOT(max([DISTRIBUTIONCHANNELNAME]) FOR [_ISOLanguage] IN ('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

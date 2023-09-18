@@ -1,0 +1,20 @@
+{
+	"name": "vtSHIPPINGPOINTTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtSHIPPINGPOINTTEXT]\nAS \nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,SHIPPINGPOINTKeys AS (\nSELECT DISTINCT \n [Key]\n,[_SystemName]\n,[SHIPPINGPOINT]\n,[SHIPPINGPOINT] AS SHIPPINGPOINTNAME\nFROM [dmgold].[I_SHIPPINGPOINT]\n) \n,SHIPPINGPOINTKeysLanguages AS (\nSELECT * FROM SHIPPINGPOINTKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,SHIPPINGPOINTTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_SHIPPINGPOINTTEXT]\nWHERE [Key] IS NOT NULL\n)\n,SHIPPINGPOINTTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.[SHIPPINGPOINT], kl.[SHIPPINGPOINT]) AS SHIPPINGPOINT, \n    COALESCE(txt.SHIPPINGPOINTNAME, kl.SHIPPINGPOINTNAME) AS SHIPPINGPOINTNAME\nFROM SHIPPINGPOINTKeysLanguages kl\nFULL OUTER JOIN SHIPPINGPOINTTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM SHIPPINGPOINTTextprefill   \n AS SourceTable PIVOT(max([SHIPPINGPOINTNAME]) FOR [_ISOLanguage] IN\n  ('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

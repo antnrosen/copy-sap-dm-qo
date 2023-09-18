@@ -1,0 +1,849 @@
+{
+	"name": "C_SALESDOCUMENTITEMDEX_Table",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_SQLPool",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [
+			{
+				"name": "_key_ICUSTOMERPShipToParty",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_ICUSTOMERPBillToParty",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_ICUSTOMERPSoldToParty",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_ICUSTOMERPayerParty",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IBUSINESSAREA",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IPERSONWORKAGREEMENT1",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IPRODUCT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IDELIVERYBLOCKSTATUS",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IDELIVERYBLOCKREASON",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IPRODUCTGROUP2",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_ICONTROLLINGAREA",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_ISHIPPINGPOINT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IDIVISION",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IDISTRIBUTIONCHANNEL",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IPROFITCENTER",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_ISALESORGANIZATION",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "_key_IPLANT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SDDOCUMENTCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTITEMCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ISRETURNSITEM",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CREATIONDATE",
+				"type": "date"
+			},
+			{
+				"name": "CREATIONTIME",
+				"type": "nvarchar"
+			},
+			{
+				"name": "LASTCHANGEDATE",
+				"type": "date"
+			},
+			{
+				"name": "SALESORGANIZATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DISTRIBUTIONCHANNEL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DIVISION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESOFFICE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INTERNATIONALARTICLENUMBER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BATCH",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MATERIAL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORIGINALLYREQUESTEDMATERIAL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MATERIALSUBSTITUTIONREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MATERIALGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCTGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP4",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP5",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PURCHASEORDERBYCUSTOMER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTITEMTEXT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SOLDTOPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP4",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP5",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SHIPTOPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PAYERPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLTOPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESEMPLOYEE",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESEMPLOYEEWORKAGREEMENT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "RESPONSIBLEEMPLOYEE",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "RESPONSIBLEEMPLOYEEWORKAGRMT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SDDOCUMENTREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTDATE",
+				"type": "date"
+			},
+			{
+				"name": "ORDERQUANTITY",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ORDERQUANTITYUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "TARGETQUANTITY",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "TARGETQUANTITYUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "TARGETTOBASEQUANTITYDNMNTR",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "TARGETTOBASEQUANTITYNMRTR",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "ORDERTOBASEQUANTITYDNMNTR",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "ORDERTOBASEQUANTITYNMRTR",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "CONFDDELIVQTYINORDERQTYUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "TARGETDELIVQTYINORDERQTYUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "CONFDDELIVERYQTYINBASEUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "BASEUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "REQUESTEDQUANTITYINBASEUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMGROSSWEIGHT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMNETWEIGHT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMWEIGHTUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ITEMVOLUME",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMVOLUMEUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SERVICESRENDEREDDATE",
+				"type": "date"
+			},
+			{
+				"name": "SALESDISTRICT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "HDRORDERPROBABILITYINPERCENT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ITEMORDERPROBABILITYINPERCENT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESDOCUMENTRJCNREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRICINGDATE",
+				"type": "date"
+			},
+			{
+				"name": "EXCHANGERATEDATE",
+				"type": "date"
+			},
+			{
+				"name": "PRICEDETNEXCHANGERATE",
+				"type": "decimal",
+				"precision": 22,
+				"scale": 5
+			},
+			{
+				"name": "STATISTICALVALUECONTROL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "NETAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "TRANSACTIONCURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESORGANIZATIONCURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "NETPRICEAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "NETPRICEQUANTITY",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "NETPRICEQUANTITYUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "TAXAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "COSTAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL1AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL2AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL3AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL4AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL5AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL6AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "CAPPEDNETAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SHIPPINGPOINT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SHIPPINGTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELIVERYPRIORITY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "INVENTORYSPECIALSTOCKTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "REQUESTEDDELIVERYDATE",
+				"type": "date"
+			},
+			{
+				"name": "SHIPPINGCONDITION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELIVERYBLOCKREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PLANT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "STORAGELOCATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ROUTE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSCLASSIFICATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSVERSION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSTRANSFERLOCATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSLOCATION1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSLOCATION2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MINDELIVERYQTYINBASEUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "UNLIMITEDOVERDELIVERYISALLOWED",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERDELIVTOLRTDLMTRATIOINPCT",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 1
+			},
+			{
+				"name": "UNDERDELIVTOLRTDLMTRATIOINPCT",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 1
+			},
+			{
+				"name": "PARTIALDELIVERYISALLOWED",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BINDINGPERIODVALIDITYSTARTDATE",
+				"type": "date"
+			},
+			{
+				"name": "BINDINGPERIODVALIDITYENDDATE",
+				"type": "date"
+			},
+			{
+				"name": "COMPLETIONRULE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OUTLINEAGREEMENTTARGETAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "BILLINGDOCUMENTDATE",
+				"type": "date"
+			},
+			{
+				"name": "BILLINGCOMPANYCODE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "HEADERBILLINGBLOCKREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ITEMBILLINGBLOCKREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ITEMISBILLINGRELEVANT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGPLAN",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERPAYMENTTERMS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "FISCALYEAR",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FISCALPERIOD",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUSTOMERACCOUNTASSIGNMENTGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "EXCHANGERATETYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FISCALYEARVARIANT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BUSINESSAREA",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PROFITCENTER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORDERID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "WBSELEMENTINTERNALID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PROFITABILITYSEGMENT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PROFITABILITYSEGMENT_2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CONTROLLINGAREA",
+				"type": "nvarchar"
+			},
+			{
+				"name": "REFERENCESDDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "REFERENCESDDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "REFERENCESDDOCUMENTCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORIGINSDDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORIGINSDDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BUSINESSSOLUTIONORDER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BUSINESSSOLUTIONORDERITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "OVERALLSDPROCESSSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLTOTALDELIVERYSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLORDRELTDBILLGSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TOTALCREDITCHECKSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLSDDOCUMENTREJECTIONSTS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLTOTALSDDOCREFSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLSDDOCREFERENCESTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLDELIVCONFSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLDELIVERYSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELIVERYBLOCKSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGBLOCKSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TOTALSDDOCREFERENCESTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SDDOCREFERENCESTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SDDOCUMENTREJECTIONSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ITEMGENERALINCOMPLETIONSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ITEMBILLINGINCOMPLETIONSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRICINGINCOMPLETIONSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ITEMDELIVERYINCOMPLETIONSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELIVERYCONFIRMATIONSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORDERRELATEDBILLINGSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SDPROCESSSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TOTALDELIVERYSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELIVERYSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "_UpdateTimeStamp",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "_SystemName",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MaxUpdateTimeStamp",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "FISCALYEARPERIOD",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dmgold",
+			"table": "C_SALESDOCUMENTITEMDEX_1"
+		}
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"name": "vtSEGMENTTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtSEGMENTTEXT] AS\nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,SEGMENTKeys AS (\nSELECT distinct [Key]\n,[_SystemName]\n,[SEGMENT]\n,[SEGMENT] AS SEGMENTNAME\n FROM [dmgold].[I_SEGMENT]\n) \n,SEGMENTKeysLanguages AS (\nSELECT * FROM SEGMENTKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,SEGMENTTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_SEGMENTTEXT]\nWHERE [Key] IS NOT NULL\n)\n,SEGMENTTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.SEGMENT, kl.SEGMENT) AS SEGMENT, \n    COALESCE(txt.SEGMENTNAME, kl.SEGMENTNAME) AS SEGMENTNAME\nFROM SEGMENTKeysLanguages kl\nFULL OUTER JOIN SEGMENTTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM SEGMENTTextprefill  \n AS SourceTable PIVOT(max([SEGMENTNAME]) FOR [_ISOLanguage] IN\n('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

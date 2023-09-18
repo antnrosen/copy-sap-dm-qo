@@ -1,0 +1,20 @@
+{
+	"name": "GLACCOUNTHIERARCHYWTEXT_DYNAMIC",
+	"properties": {
+		"folder": {
+			"name": "Hierarchy_View_Scripts"
+		},
+		"content": {
+			"query": "SET ANSI_NULLS ON\nGO\nSET QUOTED_IDENTIFIER ON\nGO\n\nCREATE VIEW [dmgold].[GLACCOUNTHIERARCHYWTEXT_DYNAMIC]\nAS SELECT \nh.[glaccounthierarchy]\n,h.[ChartofAccounts]\n,h.[child]\n,h.[parent]\n,h.[HIERARCHYVERSION]\n,nullif((select ht.[key] FROM [dmgold].[I_GLACCOUNTINCHARTOFACCOUNTS]  ht\n  where\n     h.[GLACCOUNT] = ht.[GLAccount] and \n     h.chartofaccounts = ht.chartofaccounts\n),null) as [GLAccount_Node_Key]\n, sp.[_ISOLanguage] as [_ISOLanguage] \n,h.[level1]\n,h.[level1_key]\n,nullif(CONCAT_WS(' ',h.[level1],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level1_key \nand [_ISOLanguage] = sp.[_ISOLanguage]),null),null) as GLAccount_Hier_Level1_Text\n\n,h.[level2]\n,h.[level2_key]\n,nullif(CONCAT_WS(' ',h.[level2],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level2_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]),null),null) as GLAccount_Hier_Level2_Text\n\n,h.[level3]\n,h.[level3_key]\n,nullif(CONCAT_WS(' ',h.[level3],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level3_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level3_Text\n\n,h.[level4]\n,h.[level4_key]\n,nullif(CONCAT_WS(' ',h.[level4],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level4_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level4_Text\n\n,h.[level5]\n,h.[level5_key]\n\n,nullif(CONCAT_WS(' ',h.[level5],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level5_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level5_Text\n\n,h.[level6]\n,h.[level6_key]\n,nullif(CONCAT_WS(' ',h.[level6],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level6_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level6_Text\n\n,h.[level7]\n,h.[level7_key]\n,nullif(CONCAT_WS(' ',h.[level7],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level7_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level7_Text\n\n,h.[level8]\n,h.[level8_key]\n,nullif(CONCAT_WS(' ',h.[level8],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level8_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level8_Text\n\n,h.[level9]\n,h.[level9_key]\n,nullif(CONCAT_WS(' ',h.[level9],(select ht.hierarchynodetext FROM [dmgold].[GLACCOUNTHIERARCHYNODEFINAL] ht\n  where\n    ht.[key] = h.level9_key \n    and [_ISOLanguage] = sp.[_ISOLanguage]\n),null),null) as GLAccount_Hier_Level9_Text\n,h.[hierarchypath]\n,h.[MaxHierarchyLevel]\n,h.[_SystemName]\n,h.VALIDITYENDDATE,h.VALIDITYSTARTDATE\n FROM [dmgold].[GLACCOUNTHIERARCHY] h,[dmgold].[SAPLANGUAGE_Test] sp\n where h.[_SystemName]=sp.[_SystemName];\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

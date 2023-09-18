@@ -1,0 +1,20 @@
+{
+	"name": "vtACCOUNTINGDOCUMENTTYPETEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtACCOUNTINGDOCUMENTTYPETEXT] AS\nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,ACCOUNTINGDOCUMENTTYPEKeys AS (\nSELECT distinct [Key]\n,[_SystemName]\n,[ACCOUNTINGDOCUMENTTYPE]\n,[ACCOUNTINGDOCUMENTTYPE] AS ACCOUNTINGDOCUMENTTYPENAME\n FROM [dmgold].[I_ACCOUNTINGDOCUMENTTYPE]\n) \n,ACCOUNTINGDOCUMENTTYPEKeysLanguages AS (\nSELECT * FROM ACCOUNTINGDOCUMENTTYPEKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,ACCOUNTINGDOCUMENTTYPETextWithoutNull AS (\nSELECT * FROM [dmgold].[I_ACCOUNTINGDOCUMENTTYPETEXT]\nWHERE [Key] IS NOT NULL\n)\n,ACCOUNTINGDOCUMENTTYPETextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.ACCOUNTINGDOCUMENTTYPE, kl.ACCOUNTINGDOCUMENTTYPE) AS ACCOUNTINGDOCUMENTTYPE, \n    COALESCE(txt.ACCOUNTINGDOCUMENTTYPENAME, kl.ACCOUNTINGDOCUMENTTYPENAME) AS ACCOUNTINGDOCUMENTTYPENAME\nFROM ACCOUNTINGDOCUMENTTYPEKeysLanguages kl\nFULL OUTER JOIN ACCOUNTINGDOCUMENTTYPETextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM ACCOUNTINGDOCUMENTTYPETextprefill  \n AS SourceTable PIVOT(max([ACCOUNTINGDOCUMENTTYPENAME]) FOR [_ISOLanguage] IN\n('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

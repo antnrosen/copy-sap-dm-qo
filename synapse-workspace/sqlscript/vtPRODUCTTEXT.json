@@ -1,0 +1,20 @@
+{
+	"name": "vtPRODUCTTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtPRODUCTTEXT]\nAS \nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,PRODUCTKeys AS (\nSELECT DISTINCT \n [Key]\n,[_SystemName]\n,[PRODUCT]\n,[PRODUCT] AS PRODUCTDESCRIPTION\nFROM [dmgold].[I_PRODUCT]\n) \n,PRODUCTKeysLanguages AS (\nSELECT * FROM PRODUCTKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,PRODUCTTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_PRODUCTDESCRIPTION]\nWHERE [Key] IS NOT NULL\n)\n,PRODUCTTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.[PRODUCT], kl.[PRODUCT]) AS PRODUCT, \n    COALESCE(txt.PRODUCTDESCRIPTION, kl.PRODUCTDESCRIPTION) AS PRODUCTDESCRIPTION\nFROM PRODUCTKeysLanguages kl\nFULL OUTER JOIN PRODUCTTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM PRODUCTTextprefill   \n AS SourceTable PIVOT(max([PRODUCTDESCRIPTION]) FOR [_ISOLanguage] IN\n  ('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

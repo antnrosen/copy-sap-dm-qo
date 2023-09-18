@@ -1,0 +1,813 @@
+{
+	"name": "C_BILLINGDOCITEMBASICDEX_1Table",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_SQLPool",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [
+			{
+				"name": "ShipToPartyKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BillToPartyKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SoldToPartyKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PayerPartyKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BusinessAreaKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PersonWorkAgreementKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ProductKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CompanyCodeKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CostCenterKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ProductGroupKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ControllingAreaKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ShippingPointKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DivisionTextKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DistributionChannelKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ProfitCenterKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SalesOrganizationTextKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PlantKey",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BILLINGDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESDOCUMENTITEMCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTITEMTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "RETURNITEMPROCESSINGTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGDOCUMENTTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGDOCUMENTCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SDDOCUMENTCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CREATIONDATE",
+				"type": "date"
+			},
+			{
+				"name": "CREATIONTIME",
+				"type": "nvarchar"
+			},
+			{
+				"name": "LASTCHANGEDATE",
+				"type": "date"
+			},
+			{
+				"name": "BILLINGDOCUMENTDATE",
+				"type": "date"
+			},
+			{
+				"name": "BILLINGDOCUMENTISTEMPORARY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORGANIZATIONDIVISION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DIVISION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESOFFICE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESORGANIZATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DISTRIBUTIONCHANNEL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MATERIAL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORIGINALLYREQUESTEDMATERIAL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INTERNATIONALARTICLENUMBER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRICINGREFERENCEMATERIAL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BATCH",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MATERIALGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRODUCTGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP4",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALMATERIALGROUP5",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MATERIALCOMMISSIONGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PLANT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "STORAGELOCATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGDOCUMENTISCANCELLED",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CANCELLEDBILLINGDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGDOCUMENTITEMTEXT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SERVICESRENDEREDDATE",
+				"type": "date"
+			},
+			{
+				"name": "BILLINGQUANTITY",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "BILLINGQUANTITYUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BILLINGQUANTITYINBASEUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "BASEUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "MRPREQUIREDQUANTITYINBASEUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "BILLINGTOBASEQUANTITYDNMNTR",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "BILLINGTOBASEQUANTITYNMRTR",
+				"type": "decimal",
+				"precision": 5,
+				"scale": 0
+			},
+			{
+				"name": "ITEMGROSSWEIGHT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMNETWEIGHT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMWEIGHTUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ITEMVOLUME",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "ITEMVOLUMEUNIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BILLTOPARTYCOUNTRY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLTOPARTYREGION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGPLANRULE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGPLAN",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGPLANITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUSTOMERPRICEGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PRICELISTTYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TAXDEPARTURECOUNTRY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "VATREGISTRATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "VATREGISTRATIONCOUNTRY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "VATREGISTRATIONORIGIN",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION4",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION5",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION6",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION7",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION8",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERTAXCLASSIFICATION9",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SDPRICINGPROCEDURE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "NETAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "TRANSACTIONCURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "GROSSAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "PRICINGDATE",
+				"type": "date"
+			},
+			{
+				"name": "PRICEDETNEXCHANGERATE",
+				"type": "decimal",
+				"precision": 22,
+				"scale": 5
+			},
+			{
+				"name": "PRICINGSCALEQUANTITYINBASEUNIT",
+				"type": "decimal",
+				"precision": 20,
+				"scale": 3
+			},
+			{
+				"name": "TAXAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "COSTAMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL1AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL2AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL3AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL4AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL5AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SUBTOTAL6AMOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "STATISTICALVALUECONTROL",
+				"type": "nvarchar"
+			},
+			{
+				"name": "STATISTICSEXCHANGERATE",
+				"type": "decimal",
+				"precision": 22,
+				"scale": 5
+			},
+			{
+				"name": "STATISTICSCURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESORGANIZATIONCURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ELIGIBLEAMOUNTFORCASHDISCOUNT",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "CONTRACTACCOUNT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERPAYMENTTERMS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PAYMENTMETHOD",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PAYMENTREFERENCE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "FIXEDVALUEDATE",
+				"type": "date"
+			},
+			{
+				"name": "ADDITIONALVALUEDAYS",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PAYERPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "COMPANYCODE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "FISCALYEAR",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FISCALPERIOD",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUSTOMERACCOUNTASSIGNMENTGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BUSINESSAREA",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PROFITCENTER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORDERID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "WBSELEMENTINTERNALID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CONTROLLINGAREA",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ACCOUNTINGDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PROFITABILITYSEGMENT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PROFITABILITYSEGMENT_2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "COSTCENTER",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORIGINSDDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ORIGINSDDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PRICEDETNEXCHANGERATEDATE",
+				"type": "date"
+			},
+			{
+				"name": "EXCHANGERATETYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "FISCALYEARVARIANT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CURRENCY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ACCOUNTINGEXCHANGERATE",
+				"type": "decimal",
+				"precision": 22,
+				"scale": 5
+			},
+			{
+				"name": "ACCOUNTINGEXCHANGERATEISSET",
+				"type": "nvarchar"
+			},
+			{
+				"name": "REFERENCESDDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "REFERENCESDDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "REFERENCESDDOCUMENTCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESDOCUMENTITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESSDDOCUMENTCATEGORY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "HIGHERLEVELITEM",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "BILLINGDOCUMENTITEMINPARTSGMT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SALESGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP3",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP4",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ADDITIONALCUSTOMERGROUP5",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SDDOCUMENTREASON",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ITEMISRELEVANTFORCREDIT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CREDITRELATEDPRICE",
+				"type": "decimal",
+				"precision": 19,
+				"scale": 2
+			},
+			{
+				"name": "SALESDISTRICT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CUSTOMERGROUP",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SOLDTOPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "COUNTRY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SHIPTOPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLTOPARTY",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SALESEMPLOYEE",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "RESPONSIBLEEMPLOYEE",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SHIPPINGPOINT",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSVERSION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSCLASSIFICATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSTRANSFERLOCATION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSLOCATION1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INCOTERMSLOCATION2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SHIPPINGCONDITION",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLSDPROCESSSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLBILLINGSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ACCOUNTINGPOSTINGSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ACCOUNTINGTRANSFERSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "BILLINGISSUETYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "INVOICELISTSTATUS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVRLITMGENERALINCOMPLETIONSTS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "OVERALLPRICINGINCOMPLETIONSTS",
+				"type": "nvarchar"
+			},
+			{
+				"name": "_UpdateTimeStamp",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "_SystemName",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dmgold",
+			"table": "C_BILLINGDOCITEMBASICDEX_1"
+		}
+	}
+}

@@ -1,0 +1,300 @@
+{
+	"name": "df_s2g_dimension_nodelta",
+	"properties": {
+		"folder": {
+			"name": "SIlver_To_Gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "DimensionSilver"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "DimensionGold"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference"
+					},
+					"name": "getMaxId"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_metadata",
+						"type": "LinkedServiceReference"
+					},
+					"name": "AddDefaultValue"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_dataLake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldInsertTarget"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_metadata",
+						"type": "DatasetReference"
+					},
+					"name": "updateMaxId"
+				},
+				{
+					"linkedService": {
+						"referenceName": "ls_SQLPool",
+						"type": "LinkedServiceReference"
+					},
+					"name": "GoldSqlInsert"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoinToRetrieveExistingKeys"
+				},
+				{
+					"name": "split1"
+				},
+				{
+					"name": "addSurrogateKey"
+				},
+				{
+					"name": "selectMaxId"
+				},
+				{
+					"name": "maxIdCrossJoin"
+				},
+				{
+					"name": "calculateSurrogateKey"
+				},
+				{
+					"name": "unionResults"
+				},
+				{
+					"name": "selectColumns"
+				},
+				{
+					"name": "getNewMaxId"
+				},
+				{
+					"name": "setRowToUpdate"
+				},
+				{
+					"name": "allowInsert"
+				},
+				{
+					"name": "allowUpdate"
+				},
+				{
+					"name": "aggregateMaxId"
+				},
+				{
+					"name": "selectSourceColumns"
+				},
+				{
+					"name": "AddLanguageISOCode"
+				},
+				{
+					"name": "unionWithDefaultValue"
+				},
+				{
+					"name": "allowInsertDelta"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     p_name as string,",
+				"     p_container as string,",
+				"     p_systemName as string,",
+				"     p_keyFields as string[],",
+				"     p_sqlSchema as string",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/silver/', $p_name))) ~> DimensionSilver",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: true,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/', $p_systemName, '/gold/', $p_name))) ~> DimensionGold",
+				"source(output(",
+				"          CDSViewName as string,",
+				"          inScope as boolean,",
+				"          systemName as string,",
+				"          checkpointId as string,",
+				"          maxId as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: (\"SELECT * FROM dbo.extractionScope WHERE CDSViewName = \\'\" + $p_name + \"\\'\"),",
+				"     format: 'query') ~> getMaxId",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'query',",
+				"     store: 'sqlserver',",
+				"     query: ('SELECT -1 AS [Key]'),",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> AddDefaultValue",
+				"DimensionSilver, DimensionGold join(toString(reduce(array(toString(byNames($p_keyFields,'DimensionSilver'))), '', concat(#acc,coalesce(toString(#item),'')), #result)) == toString(reduce(array(toString(byNames($p_keyFields,'DimensionGold'))), '', concat(#acc,coalesce(toString(#item),'')), #result))",
+				"     && toString(byName('_SystemName')) == toString(byName('_SystemName')),",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'right')~> JoinToRetrieveExistingKeys",
+				"AddLanguageISOCode split(isNull(byName(\"Key\")),",
+				"     disjoint: false) ~> split1@(NewEntries, ExistingEntries)",
+				"maxIdCrossJoin keyGenerate(output(tmpKey as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> addSurrogateKey",
+				"aggregateMaxId select(mapColumn(",
+				"          maxId",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectMaxId",
+				"split1@NewEntries, selectMaxId join(true(),",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> maxIdCrossJoin",
+				"addSurrogateKey derive(Key = toInteger(tmpKey + coalesce(toInteger(maxId),0))) ~> calculateSurrogateKey",
+				"selectColumns, split1@ExistingEntries union(byName: true)~> unionResults",
+				"calculateSurrogateKey select(mapColumn(",
+				"          each(match(and(notEquals('maxId',name),notEquals('tmpKey',name))))",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectColumns",
+				"unionResults aggregate(newMaxId = max(toInteger(byName('Key')))) ~> getNewMaxId",
+				"getNewMaxId derive(CDSViewName = $p_name,",
+				"          maxId = toInteger(byName('newMaxId'))) ~> setRowToUpdate",
+				"unionResults alterRow(insertIf(true())) ~> allowInsert",
+				"setRowToUpdate alterRow(updateIf(true())) ~> allowUpdate",
+				"getMaxId aggregate(maxId = max(maxId)) ~> aggregateMaxId",
+				"JoinToRetrieveExistingKeys select(mapColumn(",
+				"          each(match(stream=='DimensionSilver')),",
+				"          each(match(name=='Key'),",
+				"               'Key' = $$)",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectSourceColumns",
+				"selectSourceColumns derive(each(match(name=='LANGUAGE'), '_ISOLanguage' = case(\r",
+				"     toString(byName('LANGUAGE'))=='a', 'AF',\r",
+				"     toString(byName('LANGUAGE'))=='L', 'PL',\r",
+				"     toString(byName('LANGUAGE'))=='0', 'SR',\r",
+				"     toString(byName('LANGUAGE'))=='1', 'ZH',\r",
+				"     toString(byName('LANGUAGE'))=='2', 'TH',\r",
+				"     toString(byName('LANGUAGE'))=='3', 'KO',\r",
+				"     toString(byName('LANGUAGE'))=='4', 'RO',\r",
+				"     toString(byName('LANGUAGE'))=='5', 'SL',\r",
+				"     toString(byName('LANGUAGE'))=='6', 'HR',\r",
+				"     toString(byName('LANGUAGE'))=='7', 'MS',\r",
+				"     toString(byName('LANGUAGE'))=='8', 'UK',\r",
+				"     toString(byName('LANGUAGE'))=='9', 'ET',\r",
+				"     toString(byName('LANGUAGE'))=='A', 'AR',\r",
+				"     toString(byName('LANGUAGE'))=='B', 'HE',\r",
+				"     toString(byName('LANGUAGE'))=='C', 'CS',\r",
+				"     toString(byName('LANGUAGE'))=='D', 'DE',\r",
+				"     toString(byName('LANGUAGE'))=='E', 'EN',\r",
+				"     toString(byName('LANGUAGE'))=='F', 'FR',\r",
+				"     toString(byName('LANGUAGE'))=='G', 'EL',\r",
+				"     toString(byName('LANGUAGE'))=='H', 'HU',\r",
+				"     toString(byName('LANGUAGE'))=='I', 'IT',\r",
+				"     toString(byName('LANGUAGE'))=='J', 'JA',\r",
+				"     toString(byName('LANGUAGE'))=='K', 'DA',\r",
+				"     toString(byName('LANGUAGE'))=='L', 'PL',\r",
+				"     toString(byName('LANGUAGE'))=='M', 'ZF',\r",
+				"     toString(byName('LANGUAGE'))=='N', 'NL',\r",
+				"     toString(byName('LANGUAGE'))=='O', 'NO',\r",
+				"     toString(byName('LANGUAGE'))=='P', 'PT',\r",
+				"     toString(byName('LANGUAGE'))=='Q', 'SK',\r",
+				"     toString(byName('LANGUAGE'))=='R', 'RU',\r",
+				"     toString(byName('LANGUAGE'))=='S', 'ES',\r",
+				"     toString(byName('LANGUAGE'))=='T', 'TR',\r",
+				"     toString(byName('LANGUAGE'))=='U', 'FI',\r",
+				"     toString(byName('LANGUAGE'))=='V', 'SV',\r",
+				"     toString(byName('LANGUAGE'))=='W', 'BG',\r",
+				"     toString(byName('LANGUAGE'))=='X', 'LT',\r",
+				"     toString(byName('LANGUAGE'))=='Y', 'LV',\r",
+				"     toString(byName('LANGUAGE'))=='Z', 'Z1',\r",
+				"     toString(byName('LANGUAGE'))=='a', 'AF',\r",
+				"     toString(byName('LANGUAGE'))=='b', 'IS',\r",
+				"     toString(byName('LANGUAGE'))=='c', 'CA',\r",
+				"     toString(byName('LANGUAGE'))=='d', 'SH',\r",
+				"     toString(byName('LANGUAGE'))=='i', 'ID',\r",
+				"     toString(byName('LANGUAGE'))=='묩', 'HI',\r",
+				"     toString(byName('LANGUAGE'))=='뱋', 'KK',\r",
+				"     toString(byName('LANGUAGE'))=='쁩', 'VI'\r",
+				"))) ~> AddLanguageISOCode",
+				"unionResults, AddDefaultValue union(byName: true)~> unionWithDefaultValue",
+				"unionWithDefaultValue alterRow(insertIf(true())) ~> allowInsertDelta",
+				"allowInsertDelta sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($p_container),",
+				"     folderPath: (concat('data/',$p_systemName,'/gold/',$p_name)),",
+				"     truncate: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1) ~> GoldInsertTarget",
+				"allowUpdate sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CDSViewName as string,",
+				"          inScope as boolean",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:false,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['CDSViewName'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 2,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> updateMaxId",
+				"allowInsert sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'synapseanalytics',",
+				"     schemaName: ($p_sqlSchema),",
+				"     tableName: ($p_name),",
+				"     preSQLs:[(\"DELETE FROM \" + $p_sqlSchema + \".\" + $p_name + \" WHERE _SystemName = \\'\" + $p_systemName + \"\\'\")],",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     allowCopyCommand: true,",
+				"     staged: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> GoldSqlInsert"
+			]
+		}
+	}
+}

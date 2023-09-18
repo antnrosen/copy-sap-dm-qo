@@ -1,0 +1,20 @@
+{
+	"name": "vtCOSTCENTERTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\n--@Columns = COALESCE(@Columns + ', ','') + QUOTENAME(_ISOLanguage)\nFROM \n    [dmgold].[SAPLANGUAGE]; \n \n--SET @columns = LEFT(@columns, LEN(@columns) - 1);\n\nSET @sql ='\nCREATE VIEW [dmgold].[vtCOSTCENTERTEXT]\nAS \nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,COSTCENTERKeys AS (\nSELECT DISTINCT \n    _SystemName, \n    [Key], \n    CONTROLLINGAREA, \n    COSTCENTER, \n    COSTCENTER AS COSTCENTERLONGNAME,\n    COSTCENTER AS COSTCENTERNAME\nFROM [dmgold].[I_COSTCENTER]\n) \n,COSTCENTERKeysLanguages AS (\nSELECT * FROM COSTCENTERKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,COSTCENTERTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_COSTCENTERTEXT]\nWHERE [Key] IS NOT NULL\n)\n,COSTCENTERTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.CONTROLLINGAREA, kl.CONTROLLINGAREA) AS CONTROLLINGAREA,   COALESCE(txt.COSTCENTER, kl.COSTCENTER) AS COSTCENTER, \n    COALESCE(txt.COSTCENTERNAME, kl.COSTCENTERNAME) AS COSTCENTERNAME\nFROM COSTCENTERKeysLanguages kl\nFULL OUTER JOIN COSTCENTERTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM COSTCENTERTextprefill   \n AS SourceTable PIVOT(max([COSTCENTERNAME]) FOR [_ISOLanguage] IN ('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

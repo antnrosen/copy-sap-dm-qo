@@ -1,0 +1,57 @@
+{
+	"name": "p_s2g_fact_deliverydocument",
+	"properties": {
+		"activities": [
+			{
+				"name": "DeliveryDocumentFactToGold",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_s2g_fact_deliverydocument",
+						"type": "DataFlowReference",
+						"parameters": {
+							"p_name": "\"I_DELIVERYDOCUMENT\"",
+							"p_directory": "\"data\"",
+							"p_container": "\"sap\"",
+							"p_systemName": "\"PM4CLNT400\"",
+							"p_keyFields": "['DELIVERYDOCUMENT']"
+						},
+						"datasetParameters": {
+							"getTimestamp": {
+								"p_Table": "extractionScope"
+							},
+							"updateLastProcessedTimestamp": {
+								"p_Table": "extractionScope"
+							}
+						}
+					},
+					"staging": {
+						"linkedService": {
+							"referenceName": "ls_dataLake",
+							"type": "LinkedServiceReference"
+						},
+						"folderPath": "sap/stagingSQL"
+					},
+					"integrationRuntime": {
+						"referenceName": "Azure-IR",
+						"type": "IntegrationRuntimeReference"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"folder": {
+			"name": "Silver_To_Gold"
+		},
+		"annotations": []
+	}
+}

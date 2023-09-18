@@ -1,0 +1,20 @@
+{
+	"name": "vtOVERALLBILLINGSTATUSTEXT",
+	"properties": {
+		"folder": {
+			"name": "Text_View_Scripts"
+		},
+		"content": {
+			"query": "DECLARE @Columns as VARCHAR(MAX),\n@sql     NVARCHAR(MAX) = '';\n\nSELECT @Columns=string_agg (QUOTENAME(_ISOLanguage),',')\nFROM \n    [dmgold].[SAPLANGUAGE]; \n\nSET @sql ='\nCREATE VIEW [dmgold].[vtOVERALLBILLINGSTATUSTEXT]\nAS \nWITH Languages AS (\nSELECT \n    _ISOLanguage, \n    [LANGUAGE], \n    [LANGUAGENAME] \nFROM dmgold.SAPLANGUAGE\nWHERE [LANGUAGE] = [LANGUAGECODE] COLLATE Latin1_General_CS_AS\n)\n,OVERALLBILLINGSTATUSKeys AS (\nSELECT DISTINCT \n [Key]\n,[_SystemName]\n,[OVERALLBILLINGSTATUS]\n,[OVERALLBILLINGSTATUS] AS OVERALLBILLINGSTATUSDESC\nFROM [dmgold].[I_OVERALLBILLINGSTATUS]\n) \n,OVERALLBILLINGSTATUSKeysLanguages AS (\nSELECT * FROM OVERALLBILLINGSTATUSKeys AS keys\nCROSS APPLY Languages AS lang\n)\n,OVERALLBILLINGSTATUSTextWithoutNull AS (\nSELECT * FROM [dmgold].[I_OVERALLBILLINGSTATUSTEXT]\nWHERE [Key] IS NOT NULL\n)\n,OVERALLBILLINGSTATUSTextprefill AS (\nSELECT\n    COALESCE(txt.[Key], kl.[Key]) AS [Key],\n    COALESCE(txt._SystemName, kl._SystemName) AS _SystemName,\n    COALESCE(txt._ISOLanguage, kl._ISOLanguage) AS _ISOLanguage,\n    COALESCE(txt.[OVERALLBILLINGSTATUS], kl.[OVERALLBILLINGSTATUS]) AS OVERALLBILLINGSTATUS, \n    COALESCE(txt.OVERALLBILLINGSTATUSDESC, kl.OVERALLBILLINGSTATUSDESC) AS OVERALLBILLINGSTATUSDESC\nFROM OVERALLBILLINGSTATUSKeysLanguages kl\nFULL OUTER JOIN OVERALLBILLINGSTATUSTextWithoutNull AS txt\n    ON kl.[Key] = txt.[Key]\n    AND kl.[_ISOLanguage] = txt.[_ISOLanguage])\nselect * FROM OVERALLBILLINGSTATUSTextprefill   \n AS SourceTable PIVOT(max([OVERALLBILLINGSTATUSDESC]) FOR [_ISOLanguage] IN\n  ('+ @columns +')\n) AS PivotTable;';\n\nEXECUTE sp_executesql @sql\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "sapdmsqlpool",
+				"poolName": "sapdmsqlpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
