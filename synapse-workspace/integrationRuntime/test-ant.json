@@ -1,0 +1,6 @@
+{
+	"name": "test-ant",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}
