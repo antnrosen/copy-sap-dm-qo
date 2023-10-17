@@ -4,15 +4,15 @@
 		"parameters": {
 			"p_serverName": {
 				"type": "string",
-				"defaultValue": "10.151.70.46"
+				"defaultValue": "10.15.0.6"
 			},
 			"p_systemNumber": {
 				"type": "string",
-				"defaultValue": "00"
+				"defaultValue": "01"
 			},
 			"p_clientID": {
 				"type": "string",
-				"defaultValue": "110"
+				"defaultValue": "400"
 			},
 			"p_subscriberName": {
 				"type": "string",
@@ -20,7 +20,7 @@
 			},
 			"p_username": {
 				"type": "string",
-				"defaultValue": "AZURE_MDM"
+				"defaultValue": "pm4admin"
 			},
 			"p_secretName": {
 				"type": "string",
