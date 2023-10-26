@@ -8,15 +8,15 @@
 			},
 			"p_systemNumber": {
 				"type": "string",
-				"defaultValue": "01"
+				"defaultValue": "00"
 			},
 			"p_clientID": {
 				"type": "string",
-				"defaultValue": "400"
+				"defaultValue": "110"
 			},
 			"p_username": {
 				"type": "string",
-				"defaultValue": "pm4admin"
+				"defaultValue": "AZURE_MDM"
 			},
 			"p_secretName": {
 				"type": "string",
