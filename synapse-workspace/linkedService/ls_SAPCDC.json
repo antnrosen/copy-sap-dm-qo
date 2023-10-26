@@ -16,7 +16,7 @@
 			},
 			"p_subscriberName": {
 				"type": "string",
-				"defaultValue": "sap-dm-synapse-v2"
+				"defaultValue": "sap-dm-synapse-v2-ir"
 			},
 			"p_username": {
 				"type": "string",
