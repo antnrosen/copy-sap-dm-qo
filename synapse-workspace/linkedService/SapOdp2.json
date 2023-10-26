@@ -12,7 +12,7 @@
 			},
 			"p_clientID": {
 				"type": "string",
-				"defaultValue": "400"
+				"defaultValue": "110"
 			},
 			"p_subscriberName": {
 				"type": "string",
