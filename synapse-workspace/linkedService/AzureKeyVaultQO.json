@@ -1,0 +1,10 @@
+{
+	"name": "AzureKeyVaultQO",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://qo-sapdmkeyvault.vault.azure.net/"
+		}
+	}
+}
