@@ -32,7 +32,7 @@
 			"password": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
-					"referenceName": "ls_keyVault",
+					"referenceName": "AzureKeyVaultQO",
 					"type": "LinkedServiceReference"
 				},
 				"secretName": {
