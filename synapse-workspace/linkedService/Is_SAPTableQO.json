@@ -4,7 +4,7 @@
 		"parameters": {
 			"p_serverName": {
 				"type": "string",
-				"defaultValue": "10.15.0.6"
+				"defaultValue": "10.151.70.46"
 			},
 			"p_systemNumber": {
 				"type": "string",
