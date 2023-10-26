@@ -1,0 +1,20 @@
+{
+	"name": "Is_SAPTableQO",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SapTable",
+		"typeProperties": {
+			"clientId": "110",
+			"sncMode": false,
+			"userName": "AZURE_MDM",
+			"server": "10.151.70.46",
+			"systemNumber": "00",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI3MWQ4NjIyYS05YzkyLTRhNmYtYjU2Zi0yODc0YTM1YjA1ZDMiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "sap-dm-synapse-v2-ir",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
