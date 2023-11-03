@@ -8,11 +8,11 @@
 			},
 			"p_systemNumber": {
 				"type": "string",
-				"defaultValue": "01"
+				"defaultValue": "00"
 			},
 			"p_clientID": {
 				"type": "string",
-				"defaultValue": "400"
+				"defaultValue": "110"
 			},
 			"p_subscriberName": {
 				"type": "string",
